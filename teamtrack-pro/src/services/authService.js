@@ -52,7 +52,7 @@ export const authService = {
       return user
     }
     const { data, error } = await supabase
-      .from('users').select('*, teams(name)').eq('email', email).single()
+      .from('users').select('*, teams!team_id(name)').eq('email', email).single()
     if (error) throw error
     return data
   },
