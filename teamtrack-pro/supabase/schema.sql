@@ -237,15 +237,16 @@ create table if not exists ai_interviews (
 );
 
 create table if not exists saved_accounts (
-  id          uuid primary key default uuid_generate_v4(),
-  user_id     uuid not null references users(id) on delete cascade,
-  label       text not null,
-  username    text,
+  id           uuid primary key default uuid_generate_v4(),
+  user_id      uuid not null references users(id) on delete cascade,
+  label        text not null,
+  username     text,
+  email        text,
   password_enc text,
-  url         text,
-  notes       text,
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now()
+  url          text,
+  notes        text,
+  created_at   timestamptz default now(),
+  updated_at   timestamptz default now()
 );
 
 create table if not exists notepad (

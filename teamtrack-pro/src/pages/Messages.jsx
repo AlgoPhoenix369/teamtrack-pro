@@ -1,11 +1,14 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { messageService } from '../services/messageService'
+import { adminService } from '../services/adminService'
 import { useAuth } from '../context/AuthContext'
 import { useRealtime } from '../context/RealtimeContext'
 import { useOnlineUsers } from '../hooks/useOnlineUsers'
 import { db } from '../services/mockDb'
 import toast from 'react-hot-toast'
 import { MessageSquare, Send, Search, Lock } from 'lucide-react'
+
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 // ── helpers ───────────────────────────────────────────────────────────
 const fmtTime = iso => {
@@ -125,10 +128,12 @@ function ChatArea({ contact, messages, currentUser, onSend }) {
   const bottomRef = useRef(null)
   const inputRef = useRef(null)
 
+  // Auto-scroll to bottom whenever messages change
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  // Focus input and clear text when switching contacts
   useEffect(() => {
     inputRef.current?.focus()
     setText('')
@@ -137,15 +142,15 @@ function ChatArea({ contact, messages, currentUser, onSend }) {
   const handleSend = async e => {
     e.preventDefault()
     const trimmed = text.trim()
-    if (!trimmed) return
+    if (!trimmed || sending) return
     setSending(true)
+    setText('')           // clear immediately so it feels responsive
     await onSend(trimmed)
-    setText('')
     setSending(false)
     inputRef.current?.focus()
   }
 
-  // Group messages by date
+  // Group messages by date for date separators
   const grouped = []
   let lastDate = ''
   for (const msg of messages) {
@@ -169,7 +174,7 @@ function ChatArea({ contact, messages, currentUser, onSend }) {
         </div>
       </div>
 
-      {/* Messages */}
+      {/* Messages thread */}
       <div className="flex-1 overflow-y-auto px-5 py-4 space-y-1">
         {grouped.length === 0 && (
           <div className="flex flex-col items-center justify-center h-full gap-3 text-center">
@@ -230,7 +235,7 @@ function ChatArea({ contact, messages, currentUser, onSend }) {
           placeholder={`Message ${contact.name}…`}
           value={text}
           onChange={e => setText(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && !e.shiftKey && handleSend(e)}
+          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) handleSend(e) }}
         />
         <button type="submit" disabled={!text.trim() || sending}
           className="w-10 h-10 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 rounded-full flex items-center justify-center transition-colors flex-shrink-0">
@@ -281,16 +286,30 @@ export default function Messages() {
   const [selected, setSelected] = useState(null)
   const [contacts, setContacts] = useState([])
 
+  // Load contacts once (from Supabase in production, mock in dev)
+  useEffect(() => {
+    const loadContacts = async () => {
+      try {
+        const allUsers = USE_MOCK ? db.getUsers() : await adminService.getAllUsers()
+        setContacts(messageService.getAllowedContacts(user, allUsers))
+      } catch {
+        setContacts(db.getUsers().filter(u => u.id !== user.id && u.is_active))
+      }
+    }
+    loadContacts()
+  }, [user])
+
+  // Load messages on mount and whenever tick fires (after send/receive)
   const load = useCallback(async () => {
-    const msgs = await messageService.getMessages(user.id)
-    setAllMessages(msgs)
+    try {
+      const msgs = await messageService.getMessages(user.id)
+      setAllMessages(msgs)
+    } catch {
+      // silently fail — optimistic state still shows sent messages
+    }
   }, [user.id])
 
-  useEffect(() => {
-    const allUsers = db.getUsers()
-    setContacts(messageService.getAllowedContacts(user, allUsers))
-    load()
-  }, [user, load, tick])
+  useEffect(() => { load() }, [load, tick])
 
   // Build thread map: contactId → sorted messages
   const threads = {}
@@ -300,7 +319,7 @@ export default function Messages() {
     threads[otherId].push(msg)
   }
 
-  // Unread count per contact (messages they sent to me, unread)
+  // Unread count per contact
   const unreadMap = {}
   for (const msg of allMessages) {
     if (msg.to_user_id === user.id && !msg.read_by_recipient) {
@@ -312,7 +331,6 @@ export default function Messages() {
 
   const handleSelect = async contact => {
     setSelected(contact)
-    // Mark their messages to me as read
     await messageService.markRead(contact.id, user.id)
     setAllMessages(prev => prev.map(m =>
       m.from_user_id === contact.id && m.to_user_id === user.id
@@ -322,10 +340,28 @@ export default function Messages() {
 
   const handleSend = async text => {
     if (!selected) return
+    // Optimistic: add a temp message immediately so thread feels instant
+    const tempMsg = {
+      id:               'temp-' + Date.now(),
+      from_user_id:     user.id,
+      to_user_id:       selected.id,
+      text,
+      read_by_recipient: false,
+      created_at:        new Date().toISOString(),
+    }
+    setAllMessages(prev => [...prev, tempMsg])
     try {
       const msg = await messageService.sendMessage(user.id, selected.id, text)
-      if (msg) { setAllMessages(prev => [...prev, msg]); ping() }
-    } catch { toast.error('Failed to send message') }
+      if (msg) {
+        // Replace temp with real message from DB (has proper id)
+        setAllMessages(prev => prev.map(m => m.id === tempMsg.id ? msg : m))
+        ping()
+      }
+    } catch {
+      // Remove the temp message if send failed
+      setAllMessages(prev => prev.filter(m => m.id !== tempMsg.id))
+      toast.error('Failed to send message')
+    }
   }
 
   const isRestricted = user.role !== 'super_admin'

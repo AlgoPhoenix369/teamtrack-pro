@@ -4,9 +4,20 @@ import { db } from './mockDb'
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 export const applicationService = {
+  _cleanPayload(data) {
+    return {
+      ...data,
+      persona_id:       data.persona_id      || null,
+      follow_up_date:   data.follow_up_date   || null,
+      salary_range_min: data.salary_range_min ? Number(data.salary_range_min) : null,
+      salary_range_max: data.salary_range_max ? Number(data.salary_range_max) : null,
+    }
+  },
+
   async createApplication(data) {
     if (USE_MOCK) return db.createApplication(data)
-    const { data: app, error } = await supabase.from('job_applications').insert(data).select().single()
+    const { data: app, error } = await supabase
+      .from('job_applications').insert(this._cleanPayload(data)).select().single()
     if (error) throw error
     db.addTimelineEvent && await this._addTimeline(app.id, data.owner_id, 'created', null, data.status, 'Application created')
     return app
@@ -16,7 +27,8 @@ export const applicationService = {
     if (USE_MOCK) return db.updateApplication(id, { ...updates, owner_id: userId })
     const { data: existing } = await supabase.from('job_applications').select('status').eq('id', id).single()
     const { data, error } = await supabase.from('job_applications')
-      .update({ ...updates, updated_at: new Date().toISOString() }).eq('id', id).select().single()
+      .update({ ...this._cleanPayload(updates), updated_at: new Date().toISOString() })
+      .eq('id', id).select().single()
     if (error) throw error
     if (updates.status && existing?.status !== updates.status) {
       await this._addTimeline(id, userId, 'status_change', existing?.status, updates.status)

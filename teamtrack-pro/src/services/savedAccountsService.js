@@ -19,7 +19,15 @@ export const savedAccountsService = {
   async create(data) {
     if (USE_MOCK) return db.createSavedAccount(data)
     const { data: account, error } = await supabase.from('saved_accounts')
-      .insert({ ...data, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .insert({
+        user_id:      data.user_id,
+        label:        data.label,
+        username:     data.username     || null,
+        email:        data.email        || null,
+        password_enc: data.password_enc || null,
+        url:          data.url          || null,
+        notes:        data.notes        || null,
+      })
       .select().single()
     if (error) throw error
     return account
@@ -27,9 +35,15 @@ export const savedAccountsService = {
 
   async update(id, updates) {
     if (USE_MOCK) return db.updateSavedAccount(id, updates)
+    const patch = { updated_at: new Date().toISOString() }
+    if (updates.label        !== undefined) patch.label        = updates.label
+    if (updates.username     !== undefined) patch.username     = updates.username     || null
+    if (updates.email        !== undefined) patch.email        = updates.email        || null
+    if (updates.password_enc !== undefined) patch.password_enc = updates.password_enc || null
+    if (updates.url          !== undefined) patch.url          = updates.url          || null
+    if (updates.notes        !== undefined) patch.notes        = updates.notes        || null
     const { data, error } = await supabase.from('saved_accounts')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id).select().single()
+      .update(patch).eq('id', id).select().single()
     if (error) throw error
     return data
   },

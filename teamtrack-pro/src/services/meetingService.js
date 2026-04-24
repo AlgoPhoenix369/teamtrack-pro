@@ -3,7 +3,7 @@ import { db } from './mockDb'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
-const SELECT = '*, organizer:users!created_by(id, name, color)'
+const SELECT = '*, organizer:users!created_by(id, name)'
 
 function toShape(m) {
   if (!m) return null
@@ -28,7 +28,7 @@ export const meetingService = {
       .select(SELECT)
       .order('scheduled_at')
     if (error) throw error
-    let list = (data || []).map(toShape)
+    let list = (data || []).map(toShape).filter(Boolean)
     if (filters.userId) {
       list = list.filter(m =>
         m.created_by === filters.userId ||

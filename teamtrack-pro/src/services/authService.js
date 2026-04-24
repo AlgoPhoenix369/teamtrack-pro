@@ -28,7 +28,14 @@ export const authService = {
     const { data, error } = await supabase.rpc('tasker_login', { p_name: name, p_pin: pin })
     if (error) throw error
     if (!data || data.length === 0) throw new Error('Invalid name or PIN')
-    return data[0]
+    const user = data[0]
+    // Establish a Supabase Auth session so RLS policies work for this tasker.
+    // Requires a matching Auth account (email + PIN as password) created in Supabase dashboard.
+    if (user.email) {
+      await supabase.auth.signInWithPassword({ email: user.email, password: pin })
+        .catch(() => {}) // graceful degradation if Auth account doesn't exist yet
+    }
+    return user
   },
 
   async getTaskerNames() {
