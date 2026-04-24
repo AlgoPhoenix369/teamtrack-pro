@@ -1,6 +1,9 @@
+import { supabase } from './supabase'
 import { db } from './mockDb'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
+
+const SELECT = '*, user:users!user_id(id, name), application:job_applications!application_id(id, company_name, job_title)'
 
 export const PLATFORMS = ['HireVue', 'Karat', 'Talview', 'Vervoe', 'Pymetrics', 'Spark Hire', 'myInterview', 'CoderPad', 'Other']
 
@@ -22,34 +25,78 @@ export const PLATFORM_COLORS = {
 export const aiInterviewService = {
   async getAll(filters = {}) {
     if (USE_MOCK) return db.getAIInterviews(filters)
-    return []
+    let q = supabase.from('ai_interviews').select(SELECT).order('created_at', { ascending: false })
+    if (filters.user_id)        q = q.eq('user_id', filters.user_id)
+    if (filters.application_id) q = q.eq('application_id', filters.application_id)
+    if (filters.status)         q = q.eq('status', filters.status)
+    const { data, error } = await q
+    if (error) throw error
+    return data || []
   },
 
   async getByApplication(applicationId) {
     if (USE_MOCK) return db.getAIInterviews({ application_id: applicationId })
-    return []
+    const { data, error } = await supabase
+      .from('ai_interviews')
+      .select(SELECT)
+      .eq('application_id', applicationId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
   },
 
   async getByUser(userId) {
     if (USE_MOCK) return db.getAIInterviews({ user_id: userId })
-    return []
+    const { data, error } = await supabase
+      .from('ai_interviews')
+      .select(SELECT)
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false })
+    if (error) throw error
+    return data || []
   },
 
   async create(data) {
     if (USE_MOCK) return db.createAIInterview(data)
-    return null
+    const { data: item, error } = await supabase
+      .from('ai_interviews')
+      .insert({
+        application_id:   data.application_id || null,
+        user_id:          data.user_id,
+        platform:         data.platform,
+        status:           data.status || 'scheduled',
+        scheduled_at:     data.scheduled_at || null,
+        completed_at:     data.completed_at || null,
+        duration_minutes: data.duration_minutes || null,
+        score:            data.score ?? null,
+        feedback:         data.feedback || null,
+        link:             data.link || null,
+        prep_notes:       data.prep_notes || null,
+      })
+      .select(SELECT)
+      .single()
+    if (error) throw error
+    return item
   },
 
   async update(id, updates) {
     if (USE_MOCK) return db.updateAIInterview(id, updates)
-    return null
+    const { data, error } = await supabase
+      .from('ai_interviews')
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq('id', id)
+      .select(SELECT)
+      .single()
+    if (error) throw error
+    return data
   },
 
   async delete(id) {
     if (USE_MOCK) { db.deleteAIInterview(id); return }
+    const { error } = await supabase.from('ai_interviews').delete().eq('id', id)
+    if (error) throw error
   },
 
-  // Aggregate stats for a set of interviews
   computeStats(interviews) {
     const completed = interviews.filter(x => x.status === 'completed')
     const withScore = completed.filter(x => x.score != null)
@@ -61,11 +108,11 @@ export const aiInterviewService = {
           ['completed','failed'].includes(x.status)).length) * 100)
       : 0
     return {
-      total:      interviews.length,
-      scheduled:  interviews.filter(x => x.status === 'scheduled').length,
-      completed:  completed.length,
-      failed:     interviews.filter(x => x.status === 'failed').length,
-      pending:    interviews.filter(x => x.status === 'pending_review').length,
+      total:     interviews.length,
+      scheduled: interviews.filter(x => x.status === 'scheduled').length,
+      completed: completed.length,
+      failed:    interviews.filter(x => x.status === 'failed').length,
+      pending:   interviews.filter(x => x.status === 'pending_review').length,
       avgScore,
       passRate,
     }

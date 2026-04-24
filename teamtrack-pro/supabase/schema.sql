@@ -175,41 +175,47 @@ create table if not exists messages (
 );
 
 create table if not exists meetings (
-  id          uuid primary key default uuid_generate_v4(),
-  title       text not null,
-  description text,
-  scheduled_at timestamptz,
+  id               uuid primary key default uuid_generate_v4(),
+  title            text not null,
+  description      text,
+  scheduled_at     timestamptz,
   duration_minutes integer default 30,
-  link        text,
-  created_by  uuid references users(id) on delete set null,
-  attendees   jsonb default '[]',
-  status      text default 'scheduled' check (status in ('scheduled','completed','cancelled')),
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now()
+  link             text,
+  color            text default '#3B82F6',
+  created_by       uuid references users(id) on delete set null,
+  attendees        jsonb default '[]',
+  status           text default 'scheduled' check (status in ('scheduled','completed','cancelled')),
+  created_at       timestamptz default now(),
+  updated_at       timestamptz default now()
 );
 
 create table if not exists help_queries (
-  id          uuid primary key default uuid_generate_v4(),
-  from_user_id uuid not null references users(id) on delete cascade,
-  to_user_id   uuid references users(id) on delete set null,
-  question    text not null,
-  status      text default 'open' check (status in ('open','resolved')),
-  replies     jsonb default '[]',
-  resolved_by  uuid references users(id) on delete set null,
-  resolved_at  timestamptz,
+  id              uuid primary key default uuid_generate_v4(),
+  from_user_id    uuid not null references users(id) on delete cascade,
+  to_user_id      uuid references users(id) on delete set null,
+  question        text not null,
+  subject         text,
+  body            text,
+  category        text default 'General',
+  priority        text default 'medium',
+  status          text default 'open' check (status in ('open','resolved')),
+  replies         jsonb default '[]',
+  resolved_by     uuid references users(id) on delete set null,
+  resolved_at     timestamptz,
   resolution_note text,
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now()
+  created_at      timestamptz default now(),
+  updated_at      timestamptz default now()
 );
 
 create table if not exists notifications (
-  id          uuid primary key default uuid_generate_v4(),
-  user_id     uuid not null references users(id) on delete cascade,
-  title       text not null,
-  body        text,
-  type        text default 'info',
-  read        boolean default false,
-  created_at  timestamptz default now()
+  id         uuid primary key default uuid_generate_v4(),
+  user_id    uuid not null references users(id) on delete cascade,
+  title      text not null,
+  body       text,
+  type       text default 'info',
+  link       text,
+  read       boolean default false,
+  created_at timestamptz default now()
 );
 
 create table if not exists ai_interviews (
