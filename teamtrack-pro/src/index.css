@@ -1,0 +1,66 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+/* Tailwind v4: class-based dark mode */
+@custom-variant dark (&:where(.dark, .dark *));
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #0f172a;
+  color: #f1f5f9;
+  margin: 0;
+  padding: 0;
+}
+
+#root { width: 100%; min-height: 100vh; }
+
+:root {
+  --primary: #1E40AF;
+  --primary-light: #3B82F6;
+  --primary-dark: #1e3a8a;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #1e293b; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* Skeleton */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position:  200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f8fafc 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 4px;
+}
+.dark .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+/* Dark overrides for white cards / inputs */
+.dark .bg-white   { background-color: #1e293b !important; }
+.dark .bg-gray-50 { background-color: #0f172a !important; }
+.dark .bg-gray-100 { background-color: #1e293b !important; }
+.dark .border-gray-100 { border-color: #334155 !important; }
+.dark .border-gray-200 { border-color: #334155 !important; }
+.dark .text-gray-900 { color: #f1f5f9 !important; }
+.dark .text-gray-800 { color: #e2e8f0 !important; }
+.dark .text-gray-700 { color: #cbd5e1 !important; }
+.dark .text-gray-600 { color: #94a3b8 !important; }
+.dark .text-gray-500 { color: #64748b !important; }
+.dark .text-gray-400 { color: #475569 !important; }
+.dark input, .dark textarea, .dark select {
+  background-color: #0f172a !important;
+  border-color: #334155 !important;
+  color: #f1f5f9 !important;
+}
+.dark input::placeholder, .dark textarea::placeholder { color: #475569 !important; }
+.dark table thead { background-color: #1e293b !important; }
+.dark tr:hover { background-color: #1e293b !important; }
