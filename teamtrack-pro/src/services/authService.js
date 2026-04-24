@@ -9,7 +9,6 @@ export const authService = {
       const user = db.getUserByEmail(email)
       if (!user) throw new Error('User not found')
       if (!['super_admin', 'view_admin'].includes(user.role)) throw new Error('Not an admin account')
-      // Mock: any non-empty password works in dev
       if (!password) throw new Error('Password required')
       return { user }
     }
@@ -26,11 +25,22 @@ export const authService = {
       if (user.pin_hash !== pin) throw new Error('Invalid PIN')
       return user
     }
-    const { data: user, error } = await supabase
-      .from('users').select('*').ilike('name', name).eq('is_active', true).single()
-    if (error || !user) throw new Error('User not found')
-    if (user.pin_hash !== pin) throw new Error('Invalid PIN')
-    return user
+    const { data, error } = await supabase.rpc('tasker_login', { p_name: name, p_pin: pin })
+    if (error) throw error
+    if (!data || data.length === 0) throw new Error('Invalid name or PIN')
+    return data[0]
+  },
+
+  async getTaskerNames() {
+    if (USE_MOCK) {
+      return db.getUsers()
+        .filter(u => u.role === 'tasker' && u.is_active)
+        .map(u => u.name)
+        .sort()
+    }
+    const { data, error } = await supabase.rpc('get_active_taskers')
+    if (error) throw error
+    return (data || []).map(u => u.name)
   },
 
   async logout() {

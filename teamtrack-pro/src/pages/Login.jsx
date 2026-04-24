@@ -1,19 +1,15 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { authService } from '../services/authService'
 import Button from '../components/ui/Button'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff } from 'lucide-react'
 
-const TASKER_NAMES = ['Sharon', 'Ruth', 'Rose', 'Davis', 'Newton', 'Evans']
-const ADMIN_EMAILS = {
-  'vincent@teamtrack.pro': 'Vincent',
-  'judy@teamtrack.pro': 'Judy',
-  'harveel@teamtrack.pro': 'Harveel',
-}
-
 export default function Login() {
-  const [mode, setMode] = useState('tasker') // 'tasker' | 'admin'
+  const [mode, setMode] = useState('tasker')
+  const [taskerNames, setTaskerNames] = useState([])
+  const [namesLoading, setNamesLoading] = useState(true)
   const [selectedName, setSelectedName] = useState('')
   const [pin, setPin] = useState('')
   const [email, setEmail] = useState('')
@@ -22,6 +18,13 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const { adminLogin, taskerLogin } = useAuth()
   const navigate = useNavigate()
+
+  useEffect(() => {
+    authService.getTaskerNames()
+      .then(names => setTaskerNames(names))
+      .catch(() => setTaskerNames([]))
+      .finally(() => setNamesLoading(false))
+  }, [])
 
   const handleTaskerLogin = async (e) => {
     e.preventDefault()
@@ -56,7 +59,6 @@ export default function Login() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-950 to-slate-900 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-8">
           <div className="inline-flex w-14 h-14 bg-blue-600 rounded-2xl items-center justify-center mb-3">
             <span className="text-white font-black text-xl">T</span>
@@ -66,7 +68,6 @@ export default function Login() {
         </div>
 
         <div className="bg-white rounded-2xl shadow-2xl p-6">
-          {/* Mode Tabs */}
           <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
             <button
               onClick={() => setMode('tasker')}
@@ -86,22 +87,32 @@ export default function Login() {
             <form onSubmit={handleTaskerLogin} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">Select Your Name</label>
-                <div className="grid grid-cols-3 gap-2">
-                  {TASKER_NAMES.map(name => (
-                    <button
-                      key={name}
-                      type="button"
-                      onClick={() => setSelectedName(name)}
-                      className={`py-2.5 text-sm font-medium rounded-lg border transition-all ${
-                        selectedName === name
-                          ? 'border-blue-600 bg-blue-50 text-blue-700'
-                          : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:bg-blue-50'
-                      }`}
-                    >
-                      {name}
-                    </button>
-                  ))}
-                </div>
+                {namesLoading ? (
+                  <div className="grid grid-cols-3 gap-2">
+                    {[...Array(6)].map((_, i) => (
+                      <div key={i} className="h-10 rounded-lg bg-gray-100 animate-pulse" />
+                    ))}
+                  </div>
+                ) : taskerNames.length === 0 ? (
+                  <p className="text-sm text-gray-400 text-center py-4">No team members found</p>
+                ) : (
+                  <div className="grid grid-cols-3 gap-2">
+                    {taskerNames.map(name => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => setSelectedName(name)}
+                        className={`py-2.5 text-sm font-medium rounded-lg border transition-all ${
+                          selectedName === name
+                            ? 'border-blue-600 bg-blue-50 text-blue-700'
+                            : 'border-gray-200 text-gray-600 hover:border-blue-300 hover:bg-blue-50'
+                        }`}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>
