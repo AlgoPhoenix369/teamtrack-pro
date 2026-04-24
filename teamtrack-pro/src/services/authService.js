@@ -30,11 +30,11 @@ export const authService = {
     if (!data || data.length === 0) throw new Error('Invalid name or PIN')
     const user = data[0]
     // Establish a Supabase Auth session so RLS policies work for this tasker.
-    // Requires a matching Auth account (email + PIN as password) created in Supabase dashboard.
-    if (user.email) {
-      await supabase.auth.signInWithPassword({ email: user.email, password: pin })
-        .catch(() => {}) // graceful degradation if Auth account doesn't exist yet
-    }
+    // Use the stored email, or generate one in the form name.tasker@teamtrack.internal
+    const authEmail = user.email ||
+      `${user.name.toLowerCase().replace(/\s+/g, '.')}.tasker@teamtrack.internal`
+    await supabase.auth.signInWithPassword({ email: authEmail, password: pin })
+      .catch(() => {}) // graceful degradation if Auth account doesn't exist yet
     return user
   },
 
