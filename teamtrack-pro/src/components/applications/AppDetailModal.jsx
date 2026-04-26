@@ -107,7 +107,7 @@ export default function AppDetailModal({ app, onClose, onUpdate, canEdit }) {
       await onUpdate(app.id, data)
       setEditing(false)
       toast.success('Application updated!')
-    } catch { toast.error('Failed to update') }
+    } catch (e) { console.error('updateApplication error:', e); toast.error(e?.message || 'Failed to update') }
     finally { setSaving(false) }
   }
 

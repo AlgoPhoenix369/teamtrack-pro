@@ -240,7 +240,7 @@ export default function Admin() {
       if (tab === 'teams')    setTeams(await adminService.getAllTeams())
       if (tab === 'audit')    setAuditLog(await adminService.getAuditLog())
       if (tab === 'sessions') setActiveSessions(await milestoneService.getActiveSessions())
-    } catch {}
+    } catch (e) { console.error('Admin load error:', e) }
     finally { setLoading(false) }
   }
 

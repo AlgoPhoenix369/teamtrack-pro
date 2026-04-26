@@ -15,7 +15,10 @@ export function AuthProvider({ children }) {
       const profile = await authService.getUserByEmail(supabaseUser.email)
       setUser({ ...profile, supabaseId: supabaseUser.id })
     } catch {
-      setUser(null)
+      // Don't log out a tasker who authenticated via PIN — their session lives
+      // in localStorage and their Supabase Auth email is synthetic, so the
+      // users-table lookup above will 406. Only clear user for admin sessions.
+      if (!localStorage.getItem('tasker_user')) setUser(null)
     }
   }, [])
 

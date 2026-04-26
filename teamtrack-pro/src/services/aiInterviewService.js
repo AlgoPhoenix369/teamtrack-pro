@@ -3,7 +3,7 @@ import { db } from './mockDb'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
-const SELECT = '*, user:users!user_id(id, name), application:job_applications!application_id(id, company_name, job_title)'
+const SELECT = '*, user:users(id,name), application:job_applications(id,company_name,job_title)'
 
 export const PLATFORMS = ['HireVue', 'Karat', 'Talview', 'Vervoe', 'Pymetrics', 'Spark Hire', 'myInterview', 'CoderPad', 'Other']
 
@@ -81,12 +81,18 @@ export const aiInterviewService = {
 
   async update(id, updates) {
     if (USE_MOCK) return db.updateAIInterview(id, updates)
+    const patch = { updated_at: new Date().toISOString() }
+    if (updates.platform         !== undefined) patch.platform         = updates.platform
+    if (updates.status           !== undefined) patch.status           = updates.status
+    if (updates.scheduled_at     !== undefined) patch.scheduled_at     = updates.scheduled_at || null
+    if (updates.completed_at     !== undefined) patch.completed_at     = updates.completed_at || null
+    if (updates.duration_minutes !== undefined) patch.duration_minutes = updates.duration_minutes || null
+    if (updates.score            !== undefined) patch.score            = updates.score ?? null
+    if (updates.feedback         !== undefined) patch.feedback         = updates.feedback || null
+    if (updates.link             !== undefined) patch.link             = updates.link || null
+    if (updates.prep_notes       !== undefined) patch.prep_notes       = updates.prep_notes || null
     const { data, error } = await supabase
-      .from('ai_interviews')
-      .update({ ...updates, updated_at: new Date().toISOString() })
-      .eq('id', id)
-      .select(SELECT)
-      .single()
+      .from('ai_interviews').update(patch).eq('id', id).select(SELECT).single()
     if (error) throw error
     return data
   },

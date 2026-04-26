@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { personaService } from '../../services/personaService'
+import { isAdmin } from '../../utils/roleGuard'
 import Button from '../ui/Button'
 
 const STATUSES = ['Wishlist','Applied','Phone Screen','Interview','Technical Test','Offer','Rejected','Withdrawn','Ghosted']
@@ -26,8 +27,17 @@ export default function AppForm({ initial, onSubmit, onCancel, loading }) {
   const [tab, setTab] = useState('basic')
 
   useEffect(() => {
-    personaService.getPersonasByUser(user.id).then(setPersonas).catch(() => {})
-  }, [user])
+    const fetch = isAdmin(user)
+      ? personaService.getAllPersonasFlat()
+      : personaService.getPersonasByUser(user.id)
+    fetch.then(list => {
+      if (initial?.persona_id && !list.find(p => p.id === initial.persona_id) && initial.personas?.full_name) {
+        setPersonas([{ id: initial.persona_id, full_name: initial.personas.full_name, email: initial.personas.email }, ...list])
+      } else {
+        setPersonas(list)
+      }
+    }).catch(() => {})
+  }, [user, initial?.persona_id])
 
   const set = (field, val) => setForm(p => ({ ...p, [field]: val }))
 
@@ -89,7 +99,7 @@ export default function AppForm({ initial, onSubmit, onCancel, loading }) {
             <select value={form.persona_id} onChange={e => set('persona_id', e.target.value)}
               className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500">
               <option value="">None / Personal</option>
-              {personas.map(p => <option key={p.id} value={p.id}>{p.full_name} ({p.email})</option>)}
+              {personas.map(p => <option key={p.id} value={p.id}>{p.full_name}{p.email ? ` (${p.email})` : ''}</option>)}
             </select>
           </div>
           {field('Follow-up Date', 'follow_up_date', 'date')}

@@ -331,6 +331,7 @@ create or replace function get_my_user_id()
 returns uuid language sql security definer stable as $$
   select id from users
   where email = auth.jwt() ->> 'email'
+     or id::text = auth.uid()::text
   limit 1;
 $$;
 

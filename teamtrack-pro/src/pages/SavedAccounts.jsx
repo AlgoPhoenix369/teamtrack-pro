@@ -262,16 +262,21 @@ export default function SavedAccounts() {
   useEffect(() => { load() }, [load, tick])
 
   const handleSave = async data => {
-    if (editItem) {
-      await savedAccountsService.update(editItem.id, data)
-      toast.success('Account updated')
-    } else {
-      await savedAccountsService.create({ ...data, user_id: data.user_id || user.id })
-      toast.success('Account saved')
+    try {
+      if (editItem) {
+        await savedAccountsService.update(editItem.id, data)
+        toast.success('Account updated')
+      } else {
+        await savedAccountsService.create({ ...data, user_id: data.user_id || user.id })
+        toast.success('Account saved')
+      }
+      setShowForm(false)
+      setEditItem(null)
+      ping()
+    } catch (e) {
+      console.error('savedAccounts save error:', e)
+      toast.error(e?.message || 'Failed to save account')
     }
-    setShowForm(false)
-    setEditItem(null)
-    ping()
   }
 
   const handleDelete = async id => {

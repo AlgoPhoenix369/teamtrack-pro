@@ -293,7 +293,7 @@ export default function Messages() {
         const allUsers = USE_MOCK ? db.getUsers() : await adminService.getAllUsers()
         setContacts(messageService.getAllowedContacts(user, allUsers))
       } catch {
-        setContacts(db.getUsers().filter(u => u.id !== user.id && u.is_active))
+        setContacts([])
       }
     }
     loadContacts()

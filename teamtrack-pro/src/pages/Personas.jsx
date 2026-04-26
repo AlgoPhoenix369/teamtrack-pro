@@ -46,7 +46,7 @@ function PersonaCard({ persona, onEdit, onDelete, canEdit }) {
 
       <div className="mt-3 pt-3 border-t border-gray-50 flex items-center justify-between">
         <p className="text-xs text-gray-400">
-          Assigned to: <span className="font-medium text-gray-600">{persona.users?.name || 'Unassigned'}</span>
+          Assigned to: <span className="font-medium text-gray-600">{persona.assignee?.name || 'Unassigned'}</span>
         </p>
         {canEdit && (
           <div className="flex gap-1">
@@ -89,7 +89,7 @@ export default function Personas() {
         ? await personaService.getAllPersonas()
         : await personaService.getPersonasByUser(user.id)
       setPersonas(data || [])
-    } catch { setPersonas([]) }
+    } catch (e) { console.error('loadPersonas error:', e); setPersonas([]) }
     finally { setLoading(false) }
   }
 
@@ -104,7 +104,7 @@ export default function Personas() {
       toast.success('Persona created!')
       setShowForm(false)
       loadPersonas()
-    } catch { toast.error('Failed to create persona') }
+    } catch (e) { console.error('createPersona error:', e); toast.error(e?.message || 'Failed to create persona') }
     finally { setSaving(false) }
   }
 
@@ -119,7 +119,7 @@ export default function Personas() {
       toast.success('Persona updated!')
       setEditTarget(null)
       loadPersonas()
-    } catch { toast.error('Failed to update persona') }
+    } catch (e) { console.error('updatePersona error:', e); toast.error(e?.message || 'Failed to update persona') }
     finally { setSaving(false) }
   }
 
@@ -128,7 +128,7 @@ export default function Personas() {
       await personaService.deletePersona(deleteTarget.id)
       setPersonas(prev => prev.filter(p => p.id !== deleteTarget.id))
       toast.success('Persona deleted')
-    } catch { toast.error('Failed to delete') }
+    } catch (e) { console.error('deletePersona error:', e); toast.error(e?.message || 'Failed to delete') }
     finally { setDeleteTarget(null) }
   }
 

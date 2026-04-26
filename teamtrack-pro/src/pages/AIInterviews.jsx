@@ -1,10 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { aiInterviewService, PLATFORMS, STATUS_META, PLATFORM_COLORS } from '../services/aiInterviewService'
+import { applicationService } from '../services/applicationService'
+import { adminService } from '../services/adminService'
 import { useAuth } from '../context/AuthContext'
 import { useRealtime } from '../context/RealtimeContext'
 import { isAdmin } from '../utils/roleGuard'
 import { db } from '../services/mockDb'
 import toast from 'react-hot-toast'
+
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 import {
   Bot, Plus, X, ExternalLink, Trash2, Edit2,
   Calendar, Clock, CheckCircle, AlertTriangle, Hourglass,
@@ -73,7 +77,7 @@ function InterviewForm({ onClose, onSave, initial, applications, currentUser }) 
       }
       await onSave(payload)
       onClose()
-    } catch { toast.error('Failed to save') }
+    } catch (e) { console.error('aiInterview save error:', e); toast.error(e?.message || 'Failed to save') }
     finally { setSaving(false) }
   }
 
@@ -359,15 +363,23 @@ export default function AIInterviews() {
     const filters = {}
     if (!isAdmin(user)) filters.user_id = user.id
     else if (filterUserId) filters.user_id = filterUserId
-    const [data, apps, users] = await Promise.all([
-      aiInterviewService.getAll(filters),
-      Promise.resolve(db.getApplications(isAdmin(user) ? {} : { owner_id: user.id })),
-      Promise.resolve(db.getUsers()),
-    ])
-    setInterviews(data)
-    setApplications(apps)
-    setAllUsers(users)
-    setLoading(false)
+    try {
+      const [data, apps, users] = await Promise.all([
+        aiInterviewService.getAll(filters),
+        USE_MOCK
+          ? db.getApplications(isAdmin(user) ? {} : { owner_id: user.id })
+          : isAdmin(user)
+            ? applicationService.getAllApplications()
+            : applicationService.getApplicationsByUser(user.id),
+        USE_MOCK
+          ? db.getUsers()
+          : adminService.getAllUsers().catch(() => []),
+      ])
+      setInterviews(data)
+      setApplications(apps || [])
+      setAllUsers(users || [])
+    } catch (e) { console.error('AIInterviews load error:', e) }
+    finally { setLoading(false) }
   }, [user, filterUserId])
 
   useEffect(() => { load() }, [load, tick])

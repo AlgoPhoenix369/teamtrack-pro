@@ -13,7 +13,7 @@ export const milestoneService = {
     let q = supabase.from('milestones')
       .select('*, assignee:users!assigned_to(id,name), creator:users!created_by(id,name)')
       .order('created_at', { ascending: false })
-    if (user?.role === 'tasker') q = q.eq('assigned_to', user.id)
+    if (user?.role === 'tasker') q = q.or(`assigned_to.eq.${user.id},created_by.eq.${user.id}`)
     const { data, error } = await q
     if (error) throw error
     return data
@@ -22,7 +22,18 @@ export const milestoneService = {
   async create(data) {
     if (USE_MOCK) return db.createMilestone(data)
     const { data: m, error } = await supabase.from('milestones')
-      .insert({ ...data, created_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+      .insert({
+        title:       data.title,
+        description: data.description  || null,
+        assigned_to: data.assigned_to  || null,
+        created_by:  data.created_by   || null,
+        due_date:    data.due_date      || null,
+        priority:    data.priority      || 'medium',
+        category:    data.category      || 'Other',
+        status:      data.status        || 'pending',
+        created_at:  new Date().toISOString(),
+        updated_at:  new Date().toISOString(),
+      })
       .select('*, assignee:users!assigned_to(id,name), creator:users!created_by(id,name)')
       .single()
     if (error) throw error
@@ -31,8 +42,17 @@ export const milestoneService = {
 
   async update(id, updates) {
     if (USE_MOCK) return db.updateMilestone(id, updates)
+    const patch = { updated_at: new Date().toISOString() }
+    if (updates.title       !== undefined) patch.title       = updates.title
+    if (updates.description !== undefined) patch.description = updates.description || null
+    if (updates.assigned_to !== undefined) patch.assigned_to = updates.assigned_to || null
+    if (updates.created_by  !== undefined) patch.created_by  = updates.created_by  || null
+    if (updates.due_date    !== undefined) patch.due_date    = updates.due_date    || null
+    if (updates.priority    !== undefined) patch.priority    = updates.priority    || 'medium'
+    if (updates.category    !== undefined) patch.category    = updates.category    || 'Other'
+    if (updates.status      !== undefined) patch.status      = updates.status      || 'pending'
     const { data, error } = await supabase.from('milestones')
-      .update({ ...updates, updated_at: new Date().toISOString() })
+      .update(patch)
       .eq('id', id)
       .select('*, assignee:users!assigned_to(id,name), creator:users!created_by(id,name)')
       .single()

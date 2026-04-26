@@ -45,7 +45,7 @@ export default function Applications() {
         ? await applicationService.getAllApplications({ userId: filterUserId || undefined })
         : await applicationService.getApplicationsByUser(user.id)
       setApps(data || [])
-    } catch { setApps([]) }
+    } catch (e) { console.error('loadApplications error:', e); setApps([]) }
     finally { setLoading(false) }
   }, [user, filterUserId])
 
@@ -80,16 +80,22 @@ export default function Applications() {
       setShowAdd(false)
       toast.success('Application added!')
       ping()
-    } catch { toast.error('Failed to add application') }
+    } catch (e) { console.error('createApplication error:', e); toast.error(e?.message || 'Failed to add application') }
     finally { setSaving(false) }
   }
 
   const handleUpdate = async (id, data) => {
-    const updated = await applicationService.updateApplication(id, data, user.id)
-    setApps(prev => prev.map(a => a.id === id ? { ...a, ...updated } : a))
-    if (detailApp?.id === id) setDetailApp(a => ({ ...a, ...updated }))
-    ping()
-    return updated
+    try {
+      const updated = await applicationService.updateApplication(id, data, user.id)
+      setApps(prev => prev.map(a => a.id === id ? { ...a, ...updated } : a))
+      if (detailApp?.id === id) setDetailApp(prev => ({ ...prev, ...updated }))
+      ping()
+      return updated
+    } catch (e) {
+      console.error('updateApplication error:', e)
+      toast.error(e?.message || 'Failed to update application')
+      throw e
+    }
   }
 
   const handleDelete = async (id) => {
