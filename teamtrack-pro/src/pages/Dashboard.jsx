@@ -13,7 +13,6 @@ import StatsCard from '../components/ui/StatsCard'
 import { SkeletonCard } from '../components/ui/Skeleton'
 import { StatusBadge, PriorityBadge } from '../components/ui/Badge'
 import { useNavigate } from 'react-router-dom'
-import { db } from '../services/mockDb'
 import {
   Clock, Briefcase, AlertCircle, Play, TrendingUp, CalendarClock,
   Megaphone, Users, StickyNote, Pin, Bot, ExternalLink, Flag, ShieldAlert,
@@ -90,16 +89,20 @@ export default function Dashboard() {
           .slice(0, 4)
         setUpcomingAI(upcoming)
 
-        // Team status: all users + any active/paused sessions today
-        const users  = db.getUsers()
-        const today  = new Date().toISOString().split('T')[0]
-        const allSessions = db.getSessions({})
-        const todayActive = allSessions.filter(
+        // Team status: active/paused sessions today (from already-fetched s)
+        const today = new Date().toISOString().split('T')[0]
+        const todayActive = (s || []).filter(
           x => x.date === today && (x.status === 'active' || x.status === 'paused')
         )
-        setAllUsers(users)
         setActiveSessions(todayActive)
-      } catch {}
+        if (isAdmin(user)) {
+          const { adminService } = await import('../services/adminService.js')
+          const teamUsers = await adminService.getAllUsers()
+          setAllUsers(teamUsers || [])
+        } else {
+          setAllUsers([user])
+        }
+      } catch (e) { console.error('Dashboard load error:', e) }
       finally { setLoading(false) }
     }
     load()
