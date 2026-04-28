@@ -6,6 +6,10 @@ import { presenceService } from '../services/presenceService'
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const AuthContext = createContext(null)
 
+// Taskers sign in with synthetic emails (name.tasker@teamtrack.internal).
+// Those emails never exist in the users table, so loadProfile must be skipped.
+const isTaskerSession = (email) => email?.endsWith('.tasker@teamtrack.internal')
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -42,13 +46,20 @@ export function AuthProvider({ children }) {
 
     // Real Supabase session
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) loadProfile(session.user)
+      // Tasker sessions use synthetic emails that never exist in the users table.
+      // Their profile is already restored from localStorage above — skip loadProfile.
+      if (session?.user && !isTaskerSession(session.user.email)) {
+        loadProfile(session.user)
+      }
       setLoading(false)
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) loadProfile(session.user)
-      else if (!localStorage.getItem('tasker_user')) setUser(null)
+      if (session?.user && !isTaskerSession(session.user.email)) {
+        loadProfile(session.user)
+      } else if (!session && !localStorage.getItem('tasker_user')) {
+        setUser(null)
+      }
     })
 
     return () => subscription.unsubscribe()
