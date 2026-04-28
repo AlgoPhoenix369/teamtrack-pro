@@ -4,40 +4,33 @@ import { useAuth } from './AuthContext'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const RealtimeContext = createContext(null)
-const POLL_MS = 10_000
+const POLL_MS = 10_000      // fallback poll
+const CHANNEL  = 'taskoenix-refresh'
 
 export function RealtimeProvider({ children }) {
   const [tick, setTick] = useState(0)
   const { user } = useAuth()
 
-  // Fallback polling — keeps data fresh even when Realtime isn't available
+  // Fallback polling — keeps data fresh if broadcast is missed
   useEffect(() => {
     const id = setInterval(() => setTick(t => t + 1), POLL_MS)
     return () => clearInterval(id)
   }, [])
 
-  // Supabase Realtime: push tick immediately when the DB changes for this user
+  // Supabase Realtime broadcast — free-tier compatible, no DB replication needed.
+  // Admin sends broadcastRefresh(userId) after any mutation; matching clients
+  // bump their tick immediately so Dashboard and Navbar re-fetch.
   useEffect(() => {
     if (USE_MOCK || !user?.id) return
 
     const bump = () => setTick(t => t + 1)
+    const id   = user.id
 
     const channel = supabase
-      .channel(`user-realtime-${user.id}`)
-      // Any milestone assigned to this user (new assignment, status update)
-      .on('postgres_changes', {
-        event: '*',
-        schema: 'public',
-        table: 'milestones',
-        filter: `assigned_to=eq.${user.id}`,
-      }, bump)
-      // New notification for this user (bell badge updates instantly)
-      .on('postgres_changes', {
-        event: 'INSERT',
-        schema: 'public',
-        table: 'notifications',
-        filter: `user_id=eq.${user.id}`,
-      }, bump)
+      .channel(CHANNEL)
+      .on('broadcast', { event: 'refresh' }, ({ payload }) => {
+        if (payload?.target === id) bump()
+      })
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }

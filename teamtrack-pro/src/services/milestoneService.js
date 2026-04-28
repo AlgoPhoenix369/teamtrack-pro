@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { db } from './mockDb'
+import { broadcastRefresh } from './broadcastService'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
@@ -37,6 +38,8 @@ export const milestoneService = {
       .select('*, assignee:users!assigned_to(id,name), creator:users!created_by(id,name)')
       .single()
     if (error) throw error
+    // Push instant refresh to the assigned tasker's browser
+    if (m.assigned_to) broadcastRefresh(m.assigned_to)
     return m
   },
 

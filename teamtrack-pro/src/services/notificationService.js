@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { db } from './mockDb'
+import { broadcastRefresh } from './broadcastService'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
@@ -30,6 +31,8 @@ export const notificationService = {
       .select()
       .single()
     if (error) throw error
+    // Push instant bell-badge update to the recipient's browser
+    broadcastRefresh(data.user_id)
     return item
   },
 
