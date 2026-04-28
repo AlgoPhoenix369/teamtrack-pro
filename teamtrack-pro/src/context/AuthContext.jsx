@@ -14,11 +14,12 @@ export function AuthProvider({ children }) {
     try {
       const profile = await authService.getUserByEmail(supabaseUser.email)
       setUser({ ...profile, supabaseId: supabaseUser.id })
-    } catch {
-      // Don't log out a tasker who authenticated via PIN — their session lives
-      // in localStorage and their Supabase Auth email is synthetic, so the
-      // users-table lookup above will 406. Only clear user for admin sessions.
-      if (!localStorage.getItem('tasker_user')) setUser(null)
+    } catch (e) {
+      console.error('loadProfile error:', e)
+      // Preserve current user state — don't wipe a user who just signed in.
+      // onAuthStateChange fires right after signInWithPassword and a failed
+      // profile reload must not race-condition the admin back to the login page.
+      setUser(prev => prev)
     }
   }, [])
 
@@ -60,8 +61,12 @@ export function AuthProvider({ children }) {
       setUser(profile)
       return
     }
+    // Sign in with Supabase Auth
     const { user: sbUser } = await authService.adminLogin(email, password)
-    await loadProfile(sbUser)
+    // Fetch users-table profile directly — let errors propagate so Login.jsx
+    // can show the actual failure reason instead of silently bouncing to login.
+    const profile = await authService.getUserByEmail(sbUser.email)
+    setUser({ ...profile, supabaseId: sbUser.id })
   }
 
   const taskerLogin = async (name, pin) => {

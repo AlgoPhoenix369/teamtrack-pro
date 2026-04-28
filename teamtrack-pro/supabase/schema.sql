@@ -322,7 +322,7 @@ alter table audit_log enable row level security;
 create or replace function get_my_role()
 returns text language sql security definer stable as $$
   select role from users
-  where email = auth.jwt() ->> 'email'
+  where lower(email) = lower(auth.jwt() ->> 'email')
      or id::text = auth.uid()::text
   limit 1;
 $$;
@@ -330,7 +330,7 @@ $$;
 create or replace function get_my_user_id()
 returns uuid language sql security definer stable as $$
   select id from users
-  where email = auth.jwt() ->> 'email'
+  where lower(email) = lower(auth.jwt() ->> 'email')
      or id::text = auth.uid()::text
   limit 1;
 $$;
@@ -344,6 +344,11 @@ create policy "view_admin_read_users" on users
 
 create policy "taskers_read_own" on users
   for select using (id = get_my_user_id());
+
+-- Safety net: any authenticated user can always read their own row even if
+-- get_my_user_id() fails to match (mismatched email casing or UUID mismatch).
+create policy "auth_uid_read_own" on users
+  for select using (id::text = auth.uid()::text);
 
 -- ── TEAMS ──
 create policy "admins_all_teams" on teams
