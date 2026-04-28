@@ -68,11 +68,16 @@ export const authService = {
       if (!user) throw new Error('User not found')
       return user
     }
+    // Synthetic tasker emails (.tasker@teamtrack.internal) never exist in the
+    // users table — bail immediately to avoid a pointless 406 network call.
+    if (email?.endsWith('.tasker@teamtrack.internal')) {
+      throw new Error('Tasker synthetic session — profile loaded from localStorage')
+    }
     // Primary lookup by email
     const { data, error } = await supabase
       .from('users').select('*, team:teams!team_id(name)').eq('email', email).single()
     if (!error) return data
-    // Fallback: synthetic tasker emails won't match — try by auth UID instead
+    // Fallback: try by Supabase Auth UID (covers email-mismatch edge cases)
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (authUser?.id) {
       const { data: byId, error: err2 } = await supabase

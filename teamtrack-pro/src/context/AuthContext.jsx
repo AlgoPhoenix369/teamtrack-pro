@@ -19,10 +19,11 @@ export function AuthProvider({ children }) {
       const profile = await authService.getUserByEmail(supabaseUser.email)
       setUser({ ...profile, supabaseId: supabaseUser.id })
     } catch (e) {
-      console.error('loadProfile error:', e)
+      // Suppress noise for the known-harmless tasker synthetic-email case
+      if (!supabaseUser.email?.endsWith('.tasker@teamtrack.internal')) {
+        console.error('loadProfile error:', e)
+      }
       // Preserve current user state — don't wipe a user who just signed in.
-      // onAuthStateChange fires right after signInWithPassword and a failed
-      // profile reload must not race-condition the admin back to the login page.
       setUser(prev => prev)
     }
   }, [])
