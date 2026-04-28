@@ -70,13 +70,13 @@ export const authService = {
     }
     // Primary lookup by email
     const { data, error } = await supabase
-      .from('users').select('*, team:teams(name)').eq('email', email).single()
+      .from('users').select('*, team:teams!team_id(name)').eq('email', email).single()
     if (!error) return data
     // Fallback: synthetic tasker emails won't match — try by auth UID instead
     const { data: { user: authUser } } = await supabase.auth.getUser()
     if (authUser?.id) {
       const { data: byId, error: err2 } = await supabase
-        .from('users').select('*, team:teams(name)').eq('id', authUser.id).single()
+        .from('users').select('*, team:teams!team_id(name)').eq('id', authUser.id).single()
       if (!err2) return byId
     }
     throw error

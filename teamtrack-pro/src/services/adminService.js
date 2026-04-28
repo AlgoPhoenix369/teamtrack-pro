@@ -6,7 +6,7 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 export const adminService = {
   async getAllUsers() {
     if (USE_MOCK) return db.getUsers()
-    const { data, error } = await supabase.from('users').select('*, team:teams(name)').order('name')
+    const { data, error } = await supabase.from('users').select('*, team:teams!team_id(name)').order('name')
     if (error) throw error
     return data
   },
