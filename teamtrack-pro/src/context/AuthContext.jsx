@@ -56,10 +56,15 @@ export function AuthProvider({ children }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (_event === 'SIGNED_OUT') {
+        // Covers both explicit logout AND Supabase auto-signing-out after an
+        // expired / invalid refresh token. Clean up everything.
+        localStorage.removeItem('mock_admin_user')
+        if (!localStorage.getItem('tasker_user')) setUser(null)
+        return
+      }
       if (session?.user && !isTaskerSession(session.user.email)) {
         loadProfile(session.user)
-      } else if (!session && !localStorage.getItem('tasker_user')) {
-        setUser(null)
       }
     })
 
