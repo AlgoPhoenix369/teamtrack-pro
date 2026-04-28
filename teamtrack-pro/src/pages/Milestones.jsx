@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext'
 import { useRealtime } from '../context/RealtimeContext'
 import { milestoneService } from '../services/milestoneService'
 import { adminService } from '../services/adminService'
+import { notificationService } from '../services/notificationService'
 import { isAdmin, isSuperAdmin, isAssignable, isTasker } from '../utils/roleGuard'
 import { formatDate } from '../utils/formatTime'
 import {
@@ -331,8 +332,18 @@ export default function Milestones() {
       await milestoneService.update(editItem.id, data)
       toast.success('Milestone updated')
     } else {
-      await milestoneService.create(data)
+      const created = await milestoneService.create(data)
       toast.success('Milestone created')
+      // Notify the assigned tasker (skip if admin assigned it to themselves)
+      if (created?.assigned_to && created.assigned_to !== user.id) {
+        notificationService.addNotification({
+          user_id: created.assigned_to,
+          type:    'milestone',
+          title:   '🚩 New milestone assigned to you',
+          body:    created.title,
+          link:    '/milestones',
+        }).catch(() => {})
+      }
     }
     setShowForm(false)
     setEditItem(null)

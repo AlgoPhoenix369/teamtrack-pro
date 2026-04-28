@@ -15,8 +15,72 @@ import { StatusBadge, PriorityBadge } from '../components/ui/Badge'
 import { useNavigate } from 'react-router-dom'
 import {
   Clock, Briefcase, AlertCircle, Play, TrendingUp, CalendarClock,
-  Megaphone, Users, StickyNote, Pin, Bot, ExternalLink, Flag, ShieldAlert,
+  Megaphone, Users, StickyNote, Pin, Bot, ExternalLink, Flag, ShieldAlert, X,
 } from 'lucide-react'
+
+function MilestoneAlertModal({ milestones, onDismiss, onGoTo }) {
+  const critical = milestones.filter(m => m.priority === 'critical' || m.priority === 'high')
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+      <div className="w-full max-w-md bg-slate-900 border border-amber-500/40 rounded-2xl shadow-2xl shadow-amber-500/10 overflow-hidden">
+        {/* Header */}
+        <div className="bg-amber-950/60 border-b border-amber-500/30 px-5 py-4 flex items-start gap-3">
+          <ShieldAlert size={22} className="text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="flex-1">
+            <p className="font-bold text-amber-300 text-base">Action Required Before You Start</p>
+            <p className="text-amber-500/80 text-xs mt-0.5">
+              Your admin has assigned {milestones.length} milestone{milestones.length !== 1 ? 's' : ''} that need completion first.
+            </p>
+          </div>
+          <button onClick={onDismiss} className="p-1 rounded text-amber-600 hover:text-amber-300 transition-colors flex-shrink-0">
+            <X size={16} />
+          </button>
+        </div>
+
+        {/* Milestone list */}
+        <div className="px-5 py-4 space-y-2 max-h-64 overflow-y-auto">
+          {milestones.map(m => (
+            <div key={m.id} className="flex items-center gap-3 bg-slate-800 rounded-xl px-3 py-2.5 border border-slate-700">
+              <span className={`w-2 h-2 rounded-full flex-shrink-0 ${
+                m.priority === 'critical' ? 'bg-red-500' :
+                m.priority === 'high'     ? 'bg-amber-400' :
+                m.priority === 'medium'   ? 'bg-blue-400' : 'bg-slate-500'
+              }`} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-slate-200 truncate">{m.title}</p>
+                {m.due_date && (
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    Due {new Date(m.due_date).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                  </p>
+                )}
+              </div>
+              <span className={`text-xs px-2 py-0.5 rounded-full flex-shrink-0 font-medium ${
+                m.status === 'in_progress' ? 'bg-blue-900/60 text-blue-300' :
+                m.status === 'submitted'   ? 'bg-amber-900/60 text-amber-300' :
+                'bg-slate-700 text-slate-400'
+              }`}>
+                {m.status === 'in_progress' ? 'In Progress' :
+                 m.status === 'submitted'   ? 'Awaiting Approval' : 'Pending'}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Actions */}
+        <div className="px-5 pb-5 pt-2 flex gap-3">
+          <button onClick={onGoTo}
+            className="flex-1 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-sm font-semibold transition-colors">
+            Go to Milestones
+          </button>
+          <button onClick={onDismiss}
+            className="flex-1 py-2.5 rounded-xl border border-slate-700 text-slate-400 hover:text-slate-200 hover:border-slate-600 text-sm transition-colors">
+            Remind Me Later
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const PRIORITY_BAR = {
   normal:    'bg-gray-300 dark:bg-slate-600',
@@ -53,6 +117,7 @@ export default function Dashboard() {
   const [announcements, setAnnouncements] = useState([])
   const [upcomingAI, setUpcomingAI] = useState([])
   const [assignedMilestones, setAssignedMilestones] = useState([])
+  const [showMilestoneAlert, setShowMilestoneAlert] = useState(false)
   const [loading, setLoading] = useState(true)
   const navigate = useNavigate()
 
@@ -66,6 +131,11 @@ export default function Dashboard() {
             m.created_by !== user.id && m.status !== 'done'
           )
           setAssignedMilestones(adminAssigned)
+          // Show popup once per login session when there are pending milestones
+          const ackKey = `milestones_ack_${user.id}`
+          if (adminAssigned.length > 0 && !sessionStorage.getItem(ackKey)) {
+            setShowMilestoneAlert(true)
+          }
         }
 
         const [a, s, f, anns, ai] = await Promise.all([
@@ -124,8 +194,22 @@ export default function Dashboard() {
     return s.status === 'active' ? 'working' : 'paused'
   }
 
+  const dismissMilestoneAlert = () => {
+    sessionStorage.setItem(`milestones_ack_${user.id}`, '1')
+    setShowMilestoneAlert(false)
+  }
+
   return (
     <div className="space-y-6">
+      {/* Milestone popup — shown once per login session when admin milestones are pending */}
+      {showMilestoneAlert && assignedMilestones.length > 0 && (
+        <MilestoneAlertModal
+          milestones={assignedMilestones}
+          onDismiss={dismissMilestoneAlert}
+          onGoTo={() => { dismissMilestoneAlert(); navigate('/milestones') }}
+        />
+      )}
+
       {/* Greeting */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
