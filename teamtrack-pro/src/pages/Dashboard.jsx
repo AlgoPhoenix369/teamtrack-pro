@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { useTimer } from '../context/TimerContext'
 import { applicationService } from '../services/applicationService'
@@ -119,6 +119,7 @@ export default function Dashboard() {
   const [assignedMilestones, setAssignedMilestones] = useState([])
   const [showMilestoneAlert, setShowMilestoneAlert] = useState(false)
   const [loading, setLoading] = useState(true)
+  const seenMilestoneIds = useRef(new Set())
   const navigate = useNavigate()
 
   useEffect(() => {
@@ -131,9 +132,10 @@ export default function Dashboard() {
             m.created_by !== user.id && m.status !== 'done'
           )
           setAssignedMilestones(adminAssigned)
-          // Show popup once per login session when there are pending milestones
-          const ackKey = `milestones_ack_${user.id}`
-          if (adminAssigned.length > 0 && !sessionStorage.getItem(ackKey)) {
+          // Show popup whenever there are milestones the user hasn't seen yet
+          // (first load OR a new one assigned mid-session via Realtime)
+          const unseen = adminAssigned.filter(m => !seenMilestoneIds.current.has(m.id))
+          if (unseen.length > 0) {
             setShowMilestoneAlert(true)
           }
         }
@@ -195,7 +197,9 @@ export default function Dashboard() {
   }
 
   const dismissMilestoneAlert = () => {
-    sessionStorage.setItem(`milestones_ack_${user.id}`, '1')
+    // Mark all currently shown milestones as seen so the popup doesn't
+    // re-fire on the next poll — but WILL re-fire if a new one arrives.
+    assignedMilestones.forEach(m => seenMilestoneIds.current.add(m.id))
     setShowMilestoneAlert(false)
   }
 
