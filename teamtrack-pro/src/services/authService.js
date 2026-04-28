@@ -33,8 +33,12 @@ export const authService = {
     // Use the stored email, or generate one in the form name.tasker@teamtrack.internal
     const authEmail = user.email ||
       `${user.name.toLowerCase().replace(/\s+/g, '.')}.tasker@teamtrack.internal`
-    await supabase.auth.signInWithPassword({ email: authEmail, password: pin })
-      .catch(() => {}) // graceful degradation if Auth account doesn't exist yet
+    const { error: authErr } = await supabase.auth.signInWithPassword({ email: authEmail, password: pin })
+    if (!authErr && user.id) {
+      // Store the Supabase Auth UID in users.auth_uid so RLS policies can
+      // resolve get_my_user_id() for this tasker (their users.id ≠ auth.uid()).
+      await supabase.rpc('link_auth_uid', { p_user_id: user.id }).catch(() => {})
+    }
     return user
   },
 

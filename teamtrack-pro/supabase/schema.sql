@@ -319,11 +319,14 @@ alter table follow_ups enable row level security;
 alter table audit_log enable row level security;
 
 -- Helper function: get current user's role from users table
+-- Matches by email (admins), by id=auth.uid() (if UUIDs align),
+-- or by auth_uid column (taskers — populated on first PIN login).
 create or replace function get_my_role()
 returns text language sql security definer stable as $$
   select role from users
   where lower(email) = lower(auth.jwt() ->> 'email')
-     or id::text = auth.uid()::text
+     or id::text        = auth.uid()::text
+     or auth_uid::text  = auth.uid()::text
   limit 1;
 $$;
 
@@ -331,8 +334,19 @@ create or replace function get_my_user_id()
 returns uuid language sql security definer stable as $$
   select id from users
   where lower(email) = lower(auth.jwt() ->> 'email')
-     or id::text = auth.uid()::text
+     or id::text        = auth.uid()::text
+     or auth_uid::text  = auth.uid()::text
   limit 1;
+$$;
+
+-- Called once per tasker login to store their Supabase Auth UID.
+-- Runs SECURITY DEFINER so the update bypasses RLS (which depends on
+-- auth_uid being set — bootstrapping catch-22 otherwise).
+create or replace function link_auth_uid(p_user_id uuid)
+returns void language plpgsql security definer as $$
+begin
+  update users set auth_uid = auth.uid() where id = p_user_id;
+end;
 $$;
 
 -- ── USERS ──
