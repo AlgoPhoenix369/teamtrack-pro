@@ -472,6 +472,45 @@ returns table (
 $$;
 grant execute on function get_leaderboard_ai_interviews() to authenticated;
 
+-- Contact list for messaging — every authenticated user can see basic info for all active users
+create or replace function get_message_contacts()
+returns table (id uuid, name text, role text, is_active boolean)
+language sql security definer set search_path = public as $$
+  select id, name, role, is_active
+  from users
+  where is_active = true
+  order by name;
+$$;
+grant execute on function get_message_contacts() to authenticated;
+
+-- Full AI interview list with joined user + application — bypasses RLS so
+-- every authenticated user sees all team interviews (not just their own).
+-- Also bypasses the users/job_applications RLS that would null out joined names.
+create or replace function get_all_ai_interviews()
+returns table (
+  id uuid, user_id uuid, application_id uuid, platform text, status text,
+  scheduled_at timestamptz, completed_at timestamptz, duration_minutes integer,
+  score integer, feedback text, link text, prep_notes text,
+  created_at timestamptz, updated_at timestamptz,
+  "user" jsonb, application jsonb
+)
+language sql security definer set search_path = public as $$
+  select
+    ai.id, ai.user_id, ai.application_id, ai.platform, ai.status,
+    ai.scheduled_at, ai.completed_at, ai.duration_minutes,
+    ai.score, ai.feedback, ai.link, ai.prep_notes, ai.created_at, ai.updated_at,
+    jsonb_build_object('id', u.id, 'name', u.name) as "user",
+    case when ja.id is not null
+      then jsonb_build_object('id', ja.id, 'company_name', ja.company_name, 'job_title', ja.job_title)
+      else null
+    end as application
+  from ai_interviews ai
+  left join users u on u.id = ai.user_id
+  left join job_applications ja on ja.id = ai.application_id
+  order by ai.created_at desc;
+$$;
+grant execute on function get_all_ai_interviews() to authenticated;
+
 -- ── USERS ──
 create policy "super_admins_all_users" on users
   for all using (get_my_role() = 'super_admin');

@@ -235,7 +235,7 @@ function InterviewCard({ item, currentUser, onEdit, onDelete }) {
             </p>
             <p className="text-xs text-gray-500 dark:text-slate-400 truncate">
               {item.application?.job_title || '—'}
-              {item.user && isAdmin(currentUser) && (
+              {item.user?.name && (
                 <span className="ml-2 text-gray-400 dark:text-slate-500">· {item.user.name}</span>
               )}
             </p>
@@ -360,12 +360,12 @@ export default function AIInterviews() {
 
   const load = useCallback(async () => {
     setLoading(true)
-    const filters = {}
-    if (!isAdmin(user)) filters.user_id = user.id
-    else if (filterUserId) filters.user_id = filterUserId
     try {
       const [data, apps, users] = await Promise.all([
-        aiInterviewService.getAll(filters),
+        // getTeamAll() uses a SECURITY DEFINER RPC so every role sees all interviews
+        filterUserId
+          ? aiInterviewService.getAll({ user_id: filterUserId })
+          : aiInterviewService.getTeamAll(),
         USE_MOCK
           ? db.getApplications(isAdmin(user) ? {} : { owner_id: user.id })
           : isAdmin(user)

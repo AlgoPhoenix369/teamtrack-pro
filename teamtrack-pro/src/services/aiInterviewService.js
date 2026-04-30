@@ -23,6 +23,17 @@ export const PLATFORM_COLORS = {
 }
 
 export const aiInterviewService = {
+  // Returns all team interviews via SECURITY DEFINER RPC — bypasses RLS so
+  // every authenticated user (taskers included) sees the full team list.
+  // The RPC also bypasses the users/job_applications join RLS that would
+  // return null names for other users' records.
+  async getTeamAll() {
+    if (USE_MOCK) return db.getAIInterviews({})
+    const { data, error } = await supabase.rpc('get_all_ai_interviews')
+    if (error) throw error
+    return data || []
+  },
+
   async getAll(filters = {}) {
     if (USE_MOCK) return db.getAIInterviews(filters)
     let q = supabase.from('ai_interviews').select(SELECT).order('created_at', { ascending: false })

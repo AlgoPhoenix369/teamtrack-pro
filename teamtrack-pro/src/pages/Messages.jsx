@@ -1,14 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { supabase } from '../services/supabase'
 import { messageService } from '../services/messageService'
-import { adminService } from '../services/adminService'
 import { broadcastRefresh } from '../services/broadcastService'
 import { useAuth } from '../context/AuthContext'
 import { useRealtime } from '../context/RealtimeContext'
 import { useOnlineUsers } from '../hooks/useOnlineUsers'
-import { db } from '../services/mockDb'
 import toast from 'react-hot-toast'
-import { MessageSquare, Send, Search, Lock } from 'lucide-react'
+import { MessageSquare, Send, Search } from 'lucide-react'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
@@ -249,32 +247,16 @@ function ChatArea({ contact, messages, currentUser, onSend }) {
 }
 
 // ── Empty state ───────────────────────────────────────────────────────
-function EmptyState({ isRestricted }) {
+function EmptyState() {
   return (
     <div className="flex-1 flex flex-col items-center justify-center gap-4 text-center px-8 bg-gray-50 dark:bg-slate-900">
-      {isRestricted ? (
-        <>
-          <div className="w-16 h-16 bg-amber-100 dark:bg-amber-900/20 rounded-2xl flex items-center justify-center">
-            <Lock size={28} className="text-amber-500" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-700 dark:text-slate-300">Restricted Messaging</p>
-            <p className="text-sm text-gray-400 dark:text-slate-500 mt-1 max-w-xs">
-              You can only message super admins. Messaging between team members is not permitted.
-            </p>
-          </div>
-        </>
-      ) : (
-        <>
-          <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center">
-            <MessageSquare size={28} className="text-blue-500" />
-          </div>
-          <div>
-            <p className="font-semibold text-gray-700 dark:text-slate-300">Select a conversation</p>
-            <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">Choose a contact on the left to start messaging.</p>
-          </div>
-        </>
-      )}
+      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/20 rounded-2xl flex items-center justify-center">
+        <MessageSquare size={28} className="text-blue-500" />
+      </div>
+      <div>
+        <p className="font-semibold text-gray-700 dark:text-slate-300">Select a conversation</p>
+        <p className="text-sm text-gray-400 dark:text-slate-500 mt-1">Choose a contact on the left to start messaging.</p>
+      </div>
     </div>
   )
 }
@@ -287,22 +269,18 @@ export default function Messages() {
   const [allMessages, setAllMessages] = useState([])
   const [selected, setSelected] = useState(null)
   const [contacts, setContacts] = useState([])
+  const channelRef = useRef(null)
 
-  // Load contacts once (from Supabase in production, mock in dev)
+  // Load contacts via SECURITY DEFINER RPC — works for all roles including taskers
   useEffect(() => {
-    const loadContacts = async () => {
-      try {
-        const allUsers = USE_MOCK ? db.getUsers() : await adminService.getAllUsers()
-        setContacts(messageService.getAllowedContacts(user, allUsers))
-      } catch {
-        setContacts([])
-      }
-    }
-    loadContacts()
+    messageService.getContacts()
+      .then(all => setContacts(messageService.getAllowedContacts(user, all)))
+      .catch(() => setContacts([]))
   }, [user])
 
-  // Subscribe to direct message broadcasts — delivers messages instantly
-  // without waiting for a DB round-trip or the 10s fallback poll.
+  // Subscribe to the messages broadcast channel.
+  // Keep the ref so handleSend can broadcast on the SAME subscribed channel —
+  // Supabase requires a joined channel to send; a new unsubscribed instance fails silently.
   useEffect(() => {
     if (USE_MOCK) return
     const channel = supabase
@@ -315,17 +293,16 @@ export default function Messages() {
         })
       })
       .subscribe()
-    return () => { supabase.removeChannel(channel) }
+    channelRef.current = channel
+    return () => { supabase.removeChannel(channel); channelRef.current = null }
   }, [user.id])
 
-  // Load messages on mount and whenever tick fires (after send/receive)
+  // Reload messages from DB on mount and on every tick (poll + broadcastRefresh)
   const load = useCallback(async () => {
     try {
       const msgs = await messageService.getMessages(user.id)
       setAllMessages(msgs)
-    } catch {
-      // silently fail — optimistic state still shows sent messages
-    }
+    } catch {}
   }, [user.id])
 
   useEffect(() => { load() }, [load, tick])
@@ -355,37 +332,39 @@ export default function Messages() {
       m.from_user_id === contact.id && m.to_user_id === user.id
         ? { ...m, read_by_recipient: true } : m
     ))
-    // Tell the sender their messages were read so their read-receipts update
     broadcastRefresh(contact.id)
   }
 
   const handleSend = async text => {
     if (!selected) return
-    // Optimistic: add a temp message immediately so thread feels instant
     const tempMsg = {
-      id:               'temp-' + Date.now(),
-      from_user_id:     user.id,
-      to_user_id:       selected.id,
+      id:                'temp-' + Date.now(),
+      from_user_id:      user.id,
+      to_user_id:        selected.id,
       text,
       read_by_recipient: false,
       created_at:        new Date().toISOString(),
     }
     setAllMessages(prev => [...prev, tempMsg])
+
+    // Broadcast immediately via the already-subscribed channel so the recipient
+    // sees the message in real time without waiting for the 10s poll.
+    channelRef.current?.send({
+      type: 'broadcast', event: 'new_message',
+      payload: { to: selected.id, message: tempMsg },
+    })
+
     try {
       const msg = await messageService.sendMessage(user.id, selected.id, text)
       if (msg) {
-        // Replace temp with real message from DB (has proper id)
         setAllMessages(prev => prev.map(m => m.id === tempMsg.id ? msg : m))
         ping()
       }
     } catch {
-      // Remove the temp message if send failed
       setAllMessages(prev => prev.filter(m => m.id !== tempMsg.id))
       toast.error('Failed to send message')
     }
   }
-
-  const isRestricted = user.role !== 'super_admin'
 
   return (
     <div className="flex h-[calc(100vh-64px)] overflow-hidden rounded-2xl border border-gray-200 dark:border-slate-700 shadow-sm mx-6 my-4 bg-white dark:bg-slate-800">
@@ -406,7 +385,7 @@ export default function Messages() {
             currentUser={user}
             onSend={handleSend}
           />
-        : <EmptyState isRestricted={isRestricted} />
+        : <EmptyState />
       }
     </div>
   )

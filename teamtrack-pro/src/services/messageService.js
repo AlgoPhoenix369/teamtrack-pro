@@ -8,9 +8,9 @@ const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 function toShape(m) {
   return {
     ...m,
-    from_user_id:     m.from_user,
-    to_user_id:       m.to_user,
-    text:             m.body,
+    from_user_id:      m.from_user,
+    to_user_id:        m.to_user,
+    text:              m.body,
     read_by_recipient: m.read,
   }
 }
@@ -39,15 +39,9 @@ export const messageService = {
       created_at: now,
     })
 
-    // Track A — broadcast full message payload directly to recipient's screen.
-    // Delivers instantly even if DB is slow or fails.
-    supabase.channel('taskoenix-messages')
-      .send({ type: 'broadcast', event: 'new_message', payload: { to: toUserId, message: msg } })
-      .catch(() => {})
-
-    // Track B — persist to DB (best effort). On success, tell recipient to
-    // reload from DB so they get the canonical record. On failure, Track A
-    // already delivered so the recipient still sees the message this session.
+    // Broadcast is done from the already-subscribed channel in Messages.jsx —
+    // calling .send() on an unsubscribed channel silently fails in Supabase.
+    // Here we only persist to DB and signal the recipient to reload.
     try {
       await supabase.from('messages').insert({
         from_user: fromUserId,
@@ -85,10 +79,17 @@ export const messageService = {
     return (data || []).length
   },
 
+  // SECURITY DEFINER RPC — every authenticated user (including taskers) can
+  // load the full contact list without being blocked by users-table RLS.
+  async getContacts() {
+    if (USE_MOCK) return db.getUsers().filter(u => u.is_active)
+    const { data, error } = await supabase.rpc('get_message_contacts')
+    if (error) throw error
+    return data || []
+  },
+
+  // Everyone can message everyone — only filter out self and inactive accounts.
   getAllowedContacts(currentUser, allUsers) {
-    if (currentUser.role === 'super_admin') {
-      return allUsers.filter(u => u.id !== currentUser.id && u.is_active)
-    }
-    return allUsers.filter(u => u.role === 'super_admin' && u.is_active)
+    return allUsers.filter(u => u.id !== currentUser.id && u.is_active)
   },
 }
