@@ -24,6 +24,7 @@ create table if not exists users (
   team_id     uuid references teams(id),
   pin_hash    text,
   is_active   boolean default true,
+  auth_uid    uuid,
   created_at  timestamptz default now()
 );
 
@@ -256,6 +257,16 @@ create table if not exists notepad (
   updated_at  timestamptz default now()
 );
 
+create table if not exists notes (
+  id          uuid primary key default uuid_generate_v4(),
+  user_id     uuid not null references users(id) on delete cascade,
+  title       text not null default '',
+  body        text not null default '',
+  color_idx   integer not null default 0,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now()
+);
+
 create table if not exists skills (
   id          uuid primary key default uuid_generate_v4(),
   user_id     uuid not null references users(id) on delete cascade,
@@ -293,6 +304,7 @@ create index if not exists idx_notifications_user_id on notifications(user_id);
 create index if not exists idx_ai_interviews_user_id on ai_interviews(user_id);
 create index if not exists idx_saved_accounts_user_id on saved_accounts(user_id);
 create index if not exists idx_skills_user_id on skills(user_id);
+create index if not exists idx_notes_user_id on notes(user_id);
 create index if not exists idx_skills_category on skills(category);
 
 -- ──────────────────────────────────────────────
@@ -308,6 +320,7 @@ alter table notifications enable row level security;
 alter table ai_interviews enable row level security;
 alter table saved_accounts enable row level security;
 alter table notepad enable row level security;
+alter table notes enable row level security;
 alter table skills enable row level security;
 alter table teams enable row level security;
 alter table sessions enable row level security;
@@ -317,6 +330,27 @@ alter table job_applications enable row level security;
 alter table application_timeline enable row level security;
 alter table follow_ups enable row level security;
 alter table audit_log enable row level security;
+
+-- Returns all active tasker names for the PIN-login screen.
+-- Runs SECURITY DEFINER so the unauthenticated login page can call it.
+create or replace function get_active_taskers()
+returns table(name text) language sql security definer stable as $$
+  select name from users
+  where role = 'tasker' and is_active = true
+  order by name;
+$$;
+
+-- Validates a tasker's name + PIN and returns their full user row.
+-- Runs SECURITY DEFINER so it can read users without an active session.
+create or replace function tasker_login(p_name text, p_pin text)
+returns setof users language sql security definer stable as $$
+  select * from users
+  where lower(name) = lower(p_name)
+    and pin_hash     = p_pin
+    and role         = 'tasker'
+    and is_active    = true
+  limit 1;
+$$;
 
 -- Helper function: get current user's role from users table
 -- Matches by email (admins), by id=auth.uid() (if UUIDs align),
@@ -509,6 +543,10 @@ create policy "super_admins_all_notepad" on notepad
   for all using (get_my_role() = 'super_admin');
 
 create policy "users_own_notepad" on notepad
+  for all using (user_id = get_my_user_id());
+
+-- ── NOTES (multi-note notepad) ──
+create policy "users_own_notes" on notes
   for all using (user_id = get_my_user_id());
 
 -- ── SKILLS ──

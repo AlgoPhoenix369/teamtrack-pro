@@ -1,21 +1,8 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
-import { StickyNote, Save, Trash2, Plus, X, Clock } from 'lucide-react'
+import { notepadService } from '../services/notepadService'
+import { StickyNote, Save, Trash2, Plus, Clock } from 'lucide-react'
 import toast from 'react-hot-toast'
-
-// ── Persistence helpers ───────────────────────────────────────────────
-const storageKey = userId => `notepad_${userId}`
-
-function loadNotes(userId) {
-  try {
-    const raw = localStorage.getItem(storageKey(userId))
-    return raw ? JSON.parse(raw) : []
-  } catch { return [] }
-}
-
-function saveNotes(userId, notes) {
-  localStorage.setItem(storageKey(userId), JSON.stringify(notes))
-}
 
 function uid() {
   return Math.random().toString(36).slice(2) + Date.now().toString(36)
@@ -34,13 +21,12 @@ const fmtDate = iso => {
   const d = new Date(iso)
   const now = new Date()
   const diff = Math.floor((now - d) / 60000)
-  if (diff < 1)   return 'Just now'
-  if (diff < 60)  return `${diff}m ago`
-  if (diff < 1440)return `${Math.floor(diff / 60)}h ago`
+  if (diff < 1)    return 'Just now'
+  if (diff < 60)   return `${diff}m ago`
+  if (diff < 1440) return `${Math.floor(diff / 60)}h ago`
   return d.toLocaleDateString([], { month: 'short', day: 'numeric' })
 }
 
-// ── Note card ─────────────────────────────────────────────────────────
 function NoteCard({ note, onUpdate, onDelete }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(note.body)
@@ -123,7 +109,6 @@ function NoteCard({ note, onUpdate, onDelete }) {
   )
 }
 
-// ── Color picker ──────────────────────────────────────────────────────
 function ColorPicker({ selected, onSelect }) {
   return (
     <div className="flex gap-1.5">
@@ -136,49 +121,65 @@ function ColorPicker({ selected, onSelect }) {
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────────
 export default function Notepad() {
   const { user } = useAuth()
-  const [notes, setNotes] = useState([])
+  const [notes, setNotes]       = useState([])
   const [newColor, setNewColor] = useState(0)
-  const [search, setSearch] = useState('')
+  const [search, setSearch]     = useState('')
+  const [loading, setLoading]   = useState(true)
 
   useEffect(() => {
-    setNotes(loadNotes(user.id))
+    notepadService.getNotes(user.id)
+      .then(setNotes)
+      .catch(() => toast.error('Failed to load notes'))
+      .finally(() => setLoading(false))
   }, [user.id])
 
-  const persist = useCallback(updated => {
-    setNotes(updated)
-    saveNotes(user.id, updated)
-  }, [user.id])
-
-  const addNote = () => {
-    const n = {
-      id: uid(),
-      title: '',
-      body: '',
-      colorIdx: newColor,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
+  const addNote = async () => {
+    const tempId = uid()
+    const now = new Date().toISOString()
+    const optimistic = { id: tempId, title: '', body: '', colorIdx: newColor, created_at: now, updated_at: now }
+    setNotes(prev => [optimistic, ...prev])
+    try {
+      const saved = await notepadService.createNote(user.id, { colorIdx: newColor })
+      setNotes(prev => prev.map(n => n.id === tempId ? saved : n))
+    } catch {
+      setNotes(prev => prev.filter(n => n.id !== tempId))
+      toast.error('Failed to create note')
     }
-    const updated = [n, ...notes]
-    persist(updated)
   }
 
-  const updateNote = (id, changes) => {
-    persist(notes.map(n => n.id === id ? { ...n, ...changes } : n))
-    toast.success('Note saved', { duration: 1200 })
+  const updateNote = async (id, changes) => {
+    setNotes(prev => prev.map(n => n.id === id ? { ...n, ...changes } : n))
+    try {
+      await notepadService.updateNote(id, changes)
+      toast.success('Note saved', { duration: 1200 })
+    } catch {
+      toast.error('Failed to save note')
+    }
   }
 
-  const deleteNote = id => {
-    persist(notes.filter(n => n.id !== id))
-    toast('Note deleted', { icon: '🗑️', duration: 1500 })
+  const deleteNote = async (id) => {
+    setNotes(prev => prev.filter(n => n.id !== id))
+    try {
+      await notepadService.deleteNote(id)
+      toast('Note deleted', { icon: '🗑️', duration: 1500 })
+    } catch {
+      toast.error('Failed to delete note')
+    }
   }
 
-  const clearAll = () => {
+  const clearAll = async () => {
     if (!confirm('Delete all notes? This cannot be undone.')) return
-    persist([])
-    toast('All notes cleared', { icon: '🗑️' })
+    const backup = notes
+    setNotes([])
+    try {
+      await notepadService.deleteAllNotes(user.id)
+      toast('All notes cleared', { icon: '🗑️' })
+    } catch {
+      setNotes(backup)
+      toast.error('Failed to clear notes')
+    }
   }
 
   const filtered = notes.filter(n =>
@@ -188,7 +189,6 @@ export default function Notepad() {
 
   return (
     <div className="space-y-5 max-w-5xl mx-auto">
-      {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-400 rounded-xl flex items-center justify-center">
@@ -196,7 +196,7 @@ export default function Notepad() {
           </div>
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Notepad</h1>
-            <p className="text-sm text-gray-500 dark:text-slate-400">Private notes — only visible to you</p>
+            <p className="text-sm text-gray-500 dark:text-slate-400">Private notes — synced to cloud</p>
           </div>
         </div>
         {notes.length > 0 && (
@@ -207,7 +207,6 @@ export default function Notepad() {
         )}
       </div>
 
-      {/* Toolbar */}
       <div className="flex items-center gap-3 flex-wrap">
         <input
           className="flex-1 min-w-48 border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-800 text-gray-700 dark:text-slate-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -222,17 +221,20 @@ export default function Notepad() {
         </button>
       </div>
 
-      {/* Stats bar */}
       {notes.length > 0 && (
         <p className="text-xs text-gray-400 dark:text-slate-500">
           {notes.length} note{notes.length !== 1 ? 's' : ''}
           {search && filtered.length !== notes.length && ` · ${filtered.length} matching`}
-          {' '}· stored locally, never shared
         </p>
       )}
 
-      {/* Grid */}
-      {filtered.length === 0 ? (
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="h-36 rounded-2xl bg-gray-100 dark:bg-slate-800 animate-pulse" />
+          ))}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="text-center py-20">
           <StickyNote size={40} className="mx-auto text-gray-300 dark:text-slate-600 mb-3" />
           <p className="text-gray-500 dark:text-slate-400 text-sm">
