@@ -383,6 +383,95 @@ begin
 end;
 $$;
 
+-- ── LEADERBOARD RPCs (SECURITY DEFINER — bypass RLS so taskers can read team data) ──
+
+create or replace function get_leaderboard_users()
+returns table (
+  id         uuid,
+  name       text,
+  role       text,
+  team_id    uuid,
+  is_active  boolean,
+  teams      jsonb
+) language sql security definer set search_path = public as $$
+  select
+    u.id, u.name, u.role, u.team_id, u.is_active,
+    case when t.id is not null then jsonb_build_object('name', t.name) else null end as teams
+  from users u
+  left join teams t on t.id = u.team_id
+  where u.is_active = true
+  order by u.name;
+$$;
+grant execute on function get_leaderboard_users() to authenticated;
+
+create or replace function get_leaderboard_sessions()
+returns table (
+  id               uuid,
+  user_id          uuid,
+  status           text,
+  date             text,
+  total_seconds    integer,
+  start_time       timestamptz,
+  end_time         timestamptz,
+  description      text,
+  activity_entries jsonb
+) language sql security definer set search_path = public as $$
+  select
+    s.id,
+    s.user_id,
+    s.status,
+    s.date::text,
+    s.total_seconds,
+    s.start_time,
+    s.end_time,
+    s.description,
+    coalesce(
+      (select jsonb_agg(
+        jsonb_build_object(
+          'id',         ae.id,
+          'session_id', ae.session_id,
+          'user_id',    ae.user_id,
+          'entry_type', ae.entry_type,
+          'title',      ae.title,
+          'notes',      ae.notes,
+          'timestamp',  ae.timestamp
+        )
+      ) from activity_entries ae where ae.session_id = s.id),
+      '[]'::jsonb
+    ) as activity_entries
+  from sessions s
+  order by s.created_at desc;
+$$;
+grant execute on function get_leaderboard_sessions() to authenticated;
+
+create or replace function get_leaderboard_app_counts()
+returns table (
+  owner_id    uuid,
+  total_count bigint,
+  offer_count bigint
+) language sql security definer set search_path = public as $$
+  select
+    owner_id,
+    count(*)                                      as total_count,
+    count(*) filter (where status = 'Offer')      as offer_count
+  from job_applications
+  group by owner_id;
+$$;
+grant execute on function get_leaderboard_app_counts() to authenticated;
+
+create or replace function get_leaderboard_ai_interviews()
+returns table (
+  id      uuid,
+  user_id uuid,
+  status  text,
+  score   integer
+) language sql security definer set search_path = public as $$
+  select id, user_id, status, score
+  from ai_interviews
+  order by created_at desc;
+$$;
+grant execute on function get_leaderboard_ai_interviews() to authenticated;
+
 -- ── USERS ──
 create policy "super_admins_all_users" on users
   for all using (get_my_role() = 'super_admin');

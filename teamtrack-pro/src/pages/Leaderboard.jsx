@@ -1,9 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useRealtime } from '../context/RealtimeContext'
-import { adminService } from '../services/adminService'
-import { sessionService } from '../services/sessionService'
-import { applicationService } from '../services/applicationService'
-import { aiInterviewService } from '../services/aiInterviewService'
+import { leaderboardService } from '../services/leaderboardService'
 import { formatDate } from '../utils/formatTime'
 import { TZ_KENYA, todayInTz, tzLabel, fmtTimeInTz } from '../utils/timezone'
 import { SkeletonCard } from '../components/ui/Skeleton'
@@ -309,20 +306,18 @@ export default function Leaderboard() {
   const loadData = async () => {
     setLoading(true)
     try {
-      const [users, sessions, applications, aiInterviews] = await Promise.all([
-        adminService.getAllUsers(),
-        sessionService.getAllSessions(),
-        applicationService.getAllApplications(),
-        aiInterviewService.getAll(),
-      ])
+      const { users, sessions, appCountsMap, aiInterviews } = await leaderboardService.getData()
 
       const today = todayStr()
       const week  = weekRangeKE()
 
       const computed = users.map(u => {
         const userSessions  = sessions.filter(s => s.user_id === u.id && s.status === 'completed')
-        const todaySessions = sessions.filter(s => s.user_id === u.id && s.date === today)
-        const weekSessions  = sessions.filter(s => s.user_id === u.id && s.date >= week.start && s.date <= week.end)
+        const todaySessions = sessions.filter(s => s.user_id === u.id && String(s.date).slice(0, 10) === today)
+        const weekSessions  = sessions.filter(s => {
+          const d = String(s.date).slice(0, 10)
+          return s.user_id === u.id && d >= week.start && d <= week.end
+        })
 
         const todayEvents = todaySessions.flatMap(s => s.events || [])
           .sort((a, b) => a.at?.localeCompare(b.at))
@@ -330,7 +325,7 @@ export default function Leaderboard() {
           .filter(e => e.type === 'start')
           .sort((a, b) => a.at?.localeCompare(b.at))[0]
 
-        const userApps   = applications.filter(a => a.owner_id === u.id)
+        const appCounts    = appCountsMap[u.id] || { total_count: 0, offer_count: 0 }
         const totalEntries = userSessions.reduce((acc, s) => acc + (s.activity_entries?.length || 0), 0)
 
         const userAI      = aiInterviews.filter(x => x.user_id === u.id)
@@ -344,8 +339,8 @@ export default function Leaderboard() {
           user: u,
           hours:         +(userSessions.reduce((acc, s) => acc + (s.total_seconds || 0), 0) / 3600).toFixed(1),
           sessions:      userSessions.length,
-          applications:  userApps.length,
-          offers:        userApps.filter(a => a.status === 'Offer').length,
+          applications:  appCounts.total_count,
+          offers:        appCounts.offer_count,
           entries:       totalEntries,
           ai_interviews: completedAI.length,
           aiAvgScore,
