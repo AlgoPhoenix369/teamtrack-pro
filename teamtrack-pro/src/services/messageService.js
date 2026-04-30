@@ -1,5 +1,6 @@
 import { supabase } from './supabase'
 import { db } from './mockDb'
+import { broadcastRefresh } from './broadcastService'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
@@ -28,18 +29,25 @@ export const messageService = {
 
   async sendMessage(fromUserId, toUserId, text) {
     if (USE_MOCK) return db.sendMessage(fromUserId, toUserId, text)
-    const { data, error } = await supabase
-      .from('messages')
-      .insert({
-        from_user: fromUserId,
-        to_user:   toUserId,
-        body:      text,
-        read:      false,
-      })
-      .select()
-      .single()
+    const now = new Date().toISOString()
+    const { error } = await supabase.from('messages').insert({
+      from_user: fromUserId,
+      to_user:   toUserId,
+      body:      text,
+      read:      false,
+    })
     if (error) throw error
-    return toShape(data)
+    // Notify the recipient's device immediately via broadcast
+    broadcastRefresh(toUserId)
+    // Return a shaped message so the sender's UI updates without a round-trip
+    return toShape({
+      id:         crypto.randomUUID(),
+      from_user:  fromUserId,
+      to_user:    toUserId,
+      body:       text,
+      read:       false,
+      created_at: now,
+    })
   },
 
   async markRead(fromUserId, toUserId) {

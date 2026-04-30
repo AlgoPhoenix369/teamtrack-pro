@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { messageService } from '../services/messageService'
 import { adminService } from '../services/adminService'
+import { broadcastRefresh } from '../services/broadcastService'
 import { useAuth } from '../context/AuthContext'
 import { useRealtime } from '../context/RealtimeContext'
 import { useOnlineUsers } from '../hooks/useOnlineUsers'
@@ -336,6 +337,8 @@ export default function Messages() {
       m.from_user_id === contact.id && m.to_user_id === user.id
         ? { ...m, read_by_recipient: true } : m
     ))
+    // Tell the sender their messages were read so their read-receipts update
+    broadcastRefresh(contact.id)
   }
 
   const handleSend = async text => {
