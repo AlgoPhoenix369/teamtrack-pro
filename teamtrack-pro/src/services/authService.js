@@ -33,7 +33,16 @@ export const authService = {
     // Use the stored email, or generate one in the form name.tasker@teamtrack.internal
     const authEmail = user.email ||
       `${user.name.toLowerCase().replace(/\s+/g, '.')}.tasker@teamtrack.internal`
-    const { error: authErr } = await supabase.auth.signInWithPassword({ email: authEmail, password: pin })
+    let { error: authErr } = await supabase.auth.signInWithPassword({ email: authEmail, password: pin })
+    if (authErr) {
+      // Auth account doesn't exist yet — create it on first login.
+      // Requires "Confirm email" to be DISABLED in Supabase Auth settings.
+      const { error: signUpErr } = await supabase.auth.signUp({ email: authEmail, password: pin })
+      if (!signUpErr) {
+        const { error: retryErr } = await supabase.auth.signInWithPassword({ email: authEmail, password: pin })
+        authErr = retryErr
+      }
+    }
     if (!authErr && user.id) {
       // Store the Supabase Auth UID in users.auth_uid so RLS policies can
       // resolve get_my_user_id() for this tasker (their users.id ≠ auth.uid()).
