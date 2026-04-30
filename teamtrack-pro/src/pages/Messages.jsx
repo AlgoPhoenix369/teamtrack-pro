@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
+import { supabase } from '../services/supabase'
 import { messageService } from '../services/messageService'
 import { adminService } from '../services/adminService'
 import { broadcastRefresh } from '../services/broadcastService'
@@ -299,6 +300,23 @@ export default function Messages() {
     }
     loadContacts()
   }, [user])
+
+  // Subscribe to direct message broadcasts — delivers messages instantly
+  // without waiting for a DB round-trip or the 10s fallback poll.
+  useEffect(() => {
+    if (USE_MOCK) return
+    const channel = supabase
+      .channel('taskoenix-messages')
+      .on('broadcast', { event: 'new_message' }, ({ payload }) => {
+        if (payload?.to !== user.id) return
+        setAllMessages(prev => {
+          if (prev.some(m => m.id === payload.message?.id)) return prev
+          return [...prev, payload.message]
+        })
+      })
+      .subscribe()
+    return () => { supabase.removeChannel(channel) }
+  }, [user.id])
 
   // Load messages on mount and whenever tick fires (after send/receive)
   const load = useCallback(async () => {

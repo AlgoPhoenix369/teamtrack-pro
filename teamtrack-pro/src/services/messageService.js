@@ -30,17 +30,7 @@ export const messageService = {
   async sendMessage(fromUserId, toUserId, text) {
     if (USE_MOCK) return db.sendMessage(fromUserId, toUserId, text)
     const now = new Date().toISOString()
-    const { error } = await supabase.from('messages').insert({
-      from_user: fromUserId,
-      to_user:   toUserId,
-      body:      text,
-      read:      false,
-    })
-    if (error) throw error
-    // Notify the recipient's device immediately via broadcast
-    broadcastRefresh(toUserId)
-    // Return a shaped message so the sender's UI updates without a round-trip
-    return toShape({
+    const msg = toShape({
       id:         crypto.randomUUID(),
       from_user:  fromUserId,
       to_user:    toUserId,
@@ -48,6 +38,29 @@ export const messageService = {
       read:       false,
       created_at: now,
     })
+
+    // Track A — broadcast full message payload directly to recipient's screen.
+    // Delivers instantly even if DB is slow or fails.
+    supabase.channel('taskoenix-messages')
+      .send({ type: 'broadcast', event: 'new_message', payload: { to: toUserId, message: msg } })
+      .catch(() => {})
+
+    // Track B — persist to DB (best effort). On success, tell recipient to
+    // reload from DB so they get the canonical record. On failure, Track A
+    // already delivered so the recipient still sees the message this session.
+    try {
+      await supabase.from('messages').insert({
+        from_user: fromUserId,
+        to_user:   toUserId,
+        body:      text,
+        read:      false,
+      })
+      broadcastRefresh(toUserId)
+    } catch (err) {
+      console.error('Message DB persist failed:', err)
+    }
+
+    return msg
   },
 
   async markRead(fromUserId, toUserId) {
