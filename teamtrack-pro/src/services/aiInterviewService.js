@@ -91,10 +91,9 @@ export const aiInterviewService = {
     if (updates.feedback         !== undefined) patch.feedback         = updates.feedback || null
     if (updates.link             !== undefined) patch.link             = updates.link || null
     if (updates.prep_notes       !== undefined) patch.prep_notes       = updates.prep_notes || null
-    const { data, error } = await supabase
-      .from('ai_interviews').update(patch).eq('id', id).select(SELECT).single()
+    const { error } = await supabase.from('ai_interviews').update(patch).eq('id', id)
     if (error) throw error
-    return data
+    return { id, ...patch }
   },
 
   async delete(id) {

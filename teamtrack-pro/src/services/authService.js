@@ -37,7 +37,7 @@ export const authService = {
     if (!authErr && user.id) {
       // Store the Supabase Auth UID in users.auth_uid so RLS policies can
       // resolve get_my_user_id() for this tasker (their users.id ≠ auth.uid()).
-      await supabase.rpc('link_auth_uid', { p_user_id: user.id }).catch(() => {})
+      try { await supabase.rpc('link_auth_uid', { p_user_id: user.id }) } catch {}
     }
     return user
   },

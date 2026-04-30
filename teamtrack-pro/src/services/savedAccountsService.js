@@ -60,10 +60,9 @@ export const savedAccountsService = {
     if (updates.password_enc !== undefined) patch.password_enc = updates.password_enc || null
     if (updates.url          !== undefined) patch.url          = updates.url          || null
     if (updates.notes        !== undefined) patch.notes        = updates.notes        || null
-    const { data, error } = await supabase.from('saved_accounts')
-      .update(patch).eq('id', id).select().single()
+    const { error } = await supabase.from('saved_accounts').update(patch).eq('id', id)
     if (error) throw error
-    return toShape(data)
+    return toShape({ id, ...patch })
   },
 
   async remove(id) {

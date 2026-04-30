@@ -38,9 +38,9 @@ export const skillService = {
     if (updates.proficiency !== undefined) patch.proficiency = updates.proficiency || 'Intermediate'
     if (updates.years_exp   !== undefined) patch.years_exp   = updates.years_exp   ? Number(updates.years_exp) : null
     if (updates.notes       !== undefined) patch.notes       = updates.notes       || null
-    const { data, error } = await supabase.from('skills').update(patch).eq('id', id).select().single()
+    const { error } = await supabase.from('skills').update(patch).eq('id', id)
     if (error) throw error
-    return data
+    return { id, ...patch }
   },
 
   async remove(id) {

@@ -31,9 +31,11 @@ export const sessionService = {
 
   async updateSession(sessionId, updates) {
     if (USE_MOCK) return db.updateSession(sessionId, updates)
-    const { data, error } = await supabase.from('sessions').update(updates).eq('id', sessionId).select().single()
+    // Avoid .select().single() after UPDATE — RLS may block the read-back and
+    // return 0 rows → PGRST116 → 406, even when the update itself succeeded.
+    const { error } = await supabase.from('sessions').update(updates).eq('id', sessionId)
     if (error) throw error
-    return data
+    return { id: sessionId, ...updates }
   },
 
   async stopSession(sessionId, description, totalSeconds, events = [], actingUser = null) {
@@ -44,11 +46,12 @@ export const sessionService = {
         end_time: new Date().toISOString(), total_seconds: totalSeconds, description, status: 'completed', events,
       })
     }
-    const { data, error } = await supabase.from('sessions').update({
+    const stopData = {
       end_time: new Date().toISOString(), total_seconds: totalSeconds, description, status: 'completed',
-    }).eq('id', sessionId).select().single()
+    }
+    const { error } = await supabase.from('sessions').update(stopData).eq('id', sessionId)
     if (error) throw error
-    return data
+    return { id: sessionId, ...stopData }
   },
 
   async pauseSession(id, actingUser = null) {
@@ -92,9 +95,9 @@ export const sessionService = {
 
   async addActivityEntry(entry) {
     if (USE_MOCK) return db.addEntry({ ...entry, timestamp: new Date().toISOString() })
-    const { data, error } = await supabase.from('activity_entries')
-      .insert({ ...entry, timestamp: new Date().toISOString() }).select().single()
+    const row = { ...entry, timestamp: new Date().toISOString() }
+    const { error } = await supabase.from('activity_entries').insert(row)
     if (error) throw error
-    return data
+    return row
   },
 }

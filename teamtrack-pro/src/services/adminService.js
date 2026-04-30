@@ -28,9 +28,9 @@ export const adminService = {
       db.addAuditLog({ user_id: adminId, action: 'update', table_name: 'users', record_id: id, new_data: updates })
       return u
     }
-    const { data, error } = await supabase.from('users').update(updates).eq('id', id).select().single()
+    const { error } = await supabase.from('users').update(updates).eq('id', id)
     if (error) throw error
-    return data
+    return { id, ...updates }
   },
 
   async resetPin(userId, newPin, adminId) {

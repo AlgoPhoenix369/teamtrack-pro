@@ -37,10 +37,9 @@ export const personaService = {
     if (updates.resume_url   !== undefined) patch.resume_url   = updates.resume_url   || null
     if (updates.assigned_to  !== undefined) patch.assigned_to  = updates.assigned_to  || null
     if (updates.is_active    !== undefined) patch.is_active    = updates.is_active
-    const { data, error } = await supabase.from('personas')
-      .update(patch).eq('id', id).select().single()
+    const { error } = await supabase.from('personas').update(patch).eq('id', id)
     if (error) throw error
-    return data
+    return { id, ...patch }
   },
 
   async deletePersona(id) {
@@ -78,10 +77,10 @@ export const personaService = {
 
   async assignPersona(personaId, userId) {
     if (USE_MOCK) return db.updatePersona(personaId, { assigned_to: userId })
-    const { data, error } = await supabase.from('personas')
-      .update({ assigned_to: userId }).eq('id', personaId).select().single()
+    const { error } = await supabase.from('personas')
+      .update({ assigned_to: userId }).eq('id', personaId)
     if (error) throw error
-    return data
+    return { id: personaId, assigned_to: userId }
   },
 
   async uploadResume(file, personaId) {
