@@ -118,9 +118,25 @@ export default function Applications() {
           <p className="text-sm text-gray-500 mt-0.5">{apps.length} total applications</p>
         </div>
         <div className="flex items-center gap-2">
-          <button onClick={() => exportToCSV(filtered, 'applications')}
-            className="p-2 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <Download size={16} />
+          <button
+            onClick={() => exportToCSV(filtered.map(a => ({
+              id: a.id,
+              owner: a.owner?.name || user.name,
+              company: a.company_name,
+              job_title: a.job_title,
+              status: a.status,
+              priority: a.priority,
+              applied_date: a.applied_date || '',
+              follow_up_date: a.follow_up_date || '',
+              salary_range: a.salary_range || '',
+              location: a.location || '',
+              job_url: a.job_url || '',
+              tags: (a.tags || []).join('; '),
+              notes: a.notes || '',
+              created_at: a.created_at,
+            })), 'applications')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            <Download size={15} /> Export CSV
           </button>
           {canEdit && (
             <Button onClick={() => setShowAdd(true)}>

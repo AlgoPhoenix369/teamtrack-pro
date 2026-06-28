@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react'
 import { useAuth } from '../context/AuthContext'
 import { notepadService } from '../services/notepadService'
-import { StickyNote, Save, Trash2, Plus, Clock } from 'lucide-react'
+import { exportToCSV } from '../utils/exportCSV'
+import { StickyNote, Save, Trash2, Plus, Clock, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
 
 function uid() {
@@ -200,10 +201,26 @@ export default function Notepad() {
           </div>
         </div>
         {notes.length > 0 && (
-          <button onClick={clearAll}
-            className="text-xs text-red-500 dark:text-red-400 hover:underline font-medium">
-            Clear all
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => exportToCSV(notes.map(n => ({
+                id: n.id,
+                owner: user.name,
+                title: n.title || '(untitled)',
+                body: n.body || '',
+                color_index: n.colorIdx ?? 0,
+                created_at: n.created_at || '',
+                updated_at: n.updated_at || '',
+              })), 'notepad')}
+              className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-slate-400 hover:text-gray-700 dark:hover:text-slate-200 border border-gray-200 dark:border-slate-600 rounded-lg px-2.5 py-1.5"
+            >
+              <Download size={13} /> Export CSV
+            </button>
+            <button onClick={clearAll}
+              className="text-xs text-red-500 dark:text-red-400 hover:underline font-medium">
+              Clear all
+            </button>
+          </div>
         )}
       </div>
 

@@ -9,10 +9,11 @@ import { db } from '../services/mockDb'
 import toast from 'react-hot-toast'
 
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
+import { exportToCSV } from '../utils/exportCSV'
 import {
   Bot, Plus, X, ExternalLink, Trash2, Edit2,
   Calendar, Clock, CheckCircle, AlertTriangle, Hourglass,
-  ChevronDown, ChevronUp,
+  ChevronDown, ChevronUp, Download,
 } from 'lucide-react'
 
 // ── helpers ───────────────────────────────────────────────────────────
@@ -428,10 +429,32 @@ export default function AIInterviews() {
             <p className="text-sm text-gray-500 dark:text-slate-400">Track and review AI-guided interview sessions</p>
           </div>
         </div>
-        <button onClick={() => { setEditItem(null); setShowForm(true) }}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">
-          <Plus size={15} /> Log AI Interview
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(filtered.map(x => ({
+              id: x.id,
+              tasker: x.user?.name || '',
+              company: x.application?.company_name || '',
+              job_title: x.application?.job_title || '',
+              platform: x.platform,
+              status: x.status,
+              scheduled_at: x.scheduled_at || '',
+              completed_at: x.completed_at || '',
+              duration_minutes: x.duration_minutes || '',
+              score: x.score ?? '',
+              feedback: x.feedback || '',
+              prep_notes: x.prep_notes || '',
+              link: x.link || '',
+            })), 'ai-interviews')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800"
+          >
+            <Download size={15} /> Export CSV
+          </button>
+          <button onClick={() => { setEditItem(null); setShowForm(true) }}
+            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">
+            <Plus size={15} /> Log AI Interview
+          </button>
+        </div>
       </div>
 
       {/* Stats */}

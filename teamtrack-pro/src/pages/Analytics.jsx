@@ -18,8 +18,9 @@ import {
 
 import {
   TrendingUp, Clock, Briefcase, Target, Bot, Flag,
-  Users, Star, ChevronDown, ChevronUp, Award,
+  Users, Star, ChevronDown, ChevronUp, Award, Download,
 } from 'lucide-react'
+import { exportToCSV } from '../utils/exportCSV'
 import { format, subDays, startOfWeek, addDays } from 'date-fns'
 
 const CHART_COLORS = ['#3b82f6','#a855f7','#22c55e','#f59e0b','#ef4444','#06b6d4','#f97316','#8b5cf6']
@@ -236,14 +237,48 @@ export default function Analytics() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow shadow-blue-500/20">
-          <TrendingUp size={20} className="text-white" />
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-xl flex items-center justify-center shadow shadow-blue-500/20">
+            <TrendingUp size={20} className="text-white" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold text-slate-100">Team Analytics</h1>
+            <p className="text-sm text-slate-500">Performance overview — {stats.length} workers · {today} <span className="text-red-400 text-xs font-bold ml-1">EAT</span></p>
+          </div>
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-slate-100">Team Analytics</h1>
-          <p className="text-sm text-slate-500">Performance overview — {stats.length} workers · {today} <span className="text-red-400 text-xs font-bold ml-1">EAT</span></p>
-        </div>
+        <button
+          onClick={() => exportToCSV(
+            [...stats]
+              .sort((a, b) => {
+                const score = s => Math.round((s.hoursScore*0.35)+(s.appScore*0.25)+(s.offerScore*0.20)+(s.aiScore*0.10)+(s.msScore*0.10))
+                return score(b) - score(a)
+              })
+              .map((s, i) => ({
+                rank: i + 1,
+                member: s.user.name,
+                role: s.user.role?.replace(/_/g, ' ') || '',
+                total_hours: s.totalHours,
+                sessions: s.totalSessions,
+                applications: s.totalApps,
+                offers: s.totalOffers,
+                offer_rate_pct: s.offerRate,
+                ai_interviews: s.totalAI,
+                ai_avg_score: s.avgAIScore ?? '',
+                milestones_done: s.doneMilestones,
+                total_milestones: s.totalMilestones,
+                hours_score: s.hoursScore,
+                app_score: s.appScore,
+                offer_score: s.offerScore,
+                ai_score: s.aiScore,
+                milestone_score: s.msScore,
+              })),
+            'team-analytics'
+          )}
+          className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 border border-slate-700 rounded-xl hover:bg-slate-800"
+        >
+          <Download size={15} /> Export CSV
+        </button>
       </div>
 
       {/* Team KPIs */}

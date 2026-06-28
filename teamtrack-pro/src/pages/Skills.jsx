@@ -4,9 +4,10 @@ import { useRealtime } from '../context/RealtimeContext'
 import { skillService } from '../services/skillService'
 import { adminService } from '../services/adminService'
 import { isAdmin, isSuperAdmin, isAssignable } from '../utils/roleGuard'
+import { exportToCSV } from '../utils/exportCSV'
 import {
   Code2, Plus, Pencil, Trash2, X, Users,
-  Layers, Server, Database, Cloud, FlaskConical, Wrench, ChevronDown, ChevronUp,
+  Layers, Server, Database, Cloud, FlaskConical, Wrench, ChevronDown, ChevronUp, Download,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -323,10 +324,28 @@ export default function Skills() {
             </p>
           </div>
         </div>
-        <button onClick={() => { setEditItem(null); setShowForm(true) }}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow shadow-blue-500/20">
-          <Plus size={16} /> Add Skill
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(skills.map(s => ({
+              id: s.id,
+              member: s.user?.name || '',
+              role: s.user?.role?.replace(/_/g, ' ') || '',
+              skill: s.name,
+              category: s.category,
+              proficiency: s.proficiency,
+              years_experience: s.years_exp || '',
+              notes: s.notes || '',
+              added_at: s.created_at || '',
+            })), 'skills')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 border border-slate-700 rounded-xl hover:bg-slate-800"
+          >
+            <Download size={15} /> Export CSV
+          </button>
+          <button onClick={() => { setEditItem(null); setShowForm(true) }}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow shadow-blue-500/20">
+            <Plus size={16} /> Add Skill
+          </button>
+        </div>
       </div>
 
       {/* Summary stats */}

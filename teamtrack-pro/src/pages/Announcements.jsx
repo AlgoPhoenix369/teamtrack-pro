@@ -4,7 +4,8 @@ import { useAuth } from '../context/AuthContext'
 import { useRealtime } from '../context/RealtimeContext'
 import { isSuperAdmin } from '../utils/roleGuard'
 import toast from 'react-hot-toast'
-import { Megaphone, Pin, PinOff, Trash2, Plus, X, Eye } from 'lucide-react'
+import { exportToCSV } from '../utils/exportCSV'
+import { Megaphone, Pin, PinOff, Trash2, Plus, X, Eye, Download } from 'lucide-react'
 
 // ── helpers ───────────────────────────────────────────────────────────
 const fmtDate = iso => new Date(iso).toLocaleDateString([], {
@@ -261,12 +262,29 @@ export default function Announcements() {
             </p>
           </div>
         </div>
-        {canManage && (
-          <button onClick={() => setShowCompose(true)}
-            className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">
-            <Plus size={15} /> Post Announcement
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(items.map(a => ({
+              id: a.id,
+              title: a.title,
+              body: a.body,
+              priority: a.priority,
+              pinned: a.pinned ? 'Yes' : 'No',
+              author: a.author?.name || '',
+              read_count: (a.reads || []).length,
+              created_at: a.created_at,
+            })), 'announcements')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-700 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-800"
+          >
+            <Download size={15} /> Export CSV
           </button>
-        )}
+          {canManage && (
+            <button onClick={() => setShowCompose(true)}
+              className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-sm font-medium">
+              <Plus size={15} /> Post Announcement
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filter tabs */}

@@ -5,10 +5,11 @@ import { useRealtime } from '../context/RealtimeContext'
 import { isAdmin } from '../utils/roleGuard'
 import { db } from '../services/mockDb'
 import toast from 'react-hot-toast'
+import { exportToCSV } from '../utils/exportCSV'
 import {
   Video, Plus, X, Calendar, Clock, Users, ExternalLink,
   ChevronLeft, ChevronRight, AlertTriangle, Trash2,
-  Edit2, Link as LinkIcon, Maximize2, Minimize2,
+  Edit2, Link as LinkIcon, Maximize2, Minimize2, Download,
 } from 'lucide-react'
 
 // ── helpers ───────────────────────────────────────────────────────────
@@ -536,6 +537,24 @@ export default function Meetings() {
           <p className="text-gray-500 dark:text-slate-400 text-sm mt-0.5">Schedule and manage Google Meet sessions</p>
         </div>
         <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(meetings.map(m => ({
+              id: m.id,
+              title: m.title,
+              organizer: m.organizer?.name || '',
+              start_time: m.start_time,
+              end_time: m.end_time,
+              attendees: (m.attendees || [])
+                .map(id => allUsers.find(u => u.id === id)?.name || id)
+                .join('; '),
+              attendee_count: (m.attendees || []).length,
+              meet_link: m.meet_link || '',
+              description: m.description || '',
+            })), 'meetings')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-600 rounded-xl hover:bg-gray-50 dark:hover:bg-slate-700"
+          >
+            <Download size={15} /> Export CSV
+          </button>
           <button onClick={() => setShowAvail(v => !v)}
             className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium border transition-colors
               ${showAvail

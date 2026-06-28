@@ -6,10 +6,11 @@ import { adminService } from '../services/adminService'
 import { notificationService } from '../services/notificationService'
 import { isAdmin, isSuperAdmin, isAssignable, isTasker } from '../utils/roleGuard'
 import { formatDate } from '../utils/formatTime'
+import { exportToCSV } from '../utils/exportCSV'
 import {
   Flag, Plus, Pencil, Trash2, X, ChevronDown, ChevronUp,
   CheckCircle2, Circle, Clock, AlertTriangle, Users, Zap,
-  SendHorizontal, ThumbsUp, Undo2,
+  SendHorizontal, ThumbsUp, Undo2, Download,
 } from 'lucide-react'
 import toast from 'react-hot-toast'
 
@@ -418,10 +419,29 @@ export default function Milestones() {
             </p>
           </div>
         </div>
-        <button onClick={() => { setEditItem(null); setShowForm(true) }}
-          className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow shadow-purple-500/20">
-          <Plus size={16} /> {SA ? 'Create Milestone' : 'Add My Milestone'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(milestones.map(m => ({
+              id: m.id,
+              title: m.title,
+              description: m.description || '',
+              category: m.category,
+              priority: m.priority,
+              status: m.status,
+              assigned_to: m.assignee?.name || '',
+              created_by: m.creator?.name || '',
+              due_date: m.due_date || '',
+              created_at: m.created_at,
+            })), 'milestones')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 border border-slate-700 rounded-xl hover:bg-slate-800"
+          >
+            <Download size={15} /> Export CSV
+          </button>
+          <button onClick={() => { setEditItem(null); setShowForm(true) }}
+            className="flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow shadow-purple-500/20">
+            <Plus size={16} /> {SA ? 'Create Milestone' : 'Add My Milestone'}
+          </button>
+        </div>
       </div>
 
       {/* Stats row */}

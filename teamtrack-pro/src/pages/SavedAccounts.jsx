@@ -3,8 +3,9 @@ import { useAuth } from '../context/AuthContext'
 import { useRealtime } from '../context/RealtimeContext'
 import { savedAccountsService } from '../services/savedAccountsService'
 import { isSuperAdmin, isAssignable } from '../utils/roleGuard'
-import { KeyRound, Plus, Eye, EyeOff, Pencil, Trash2, Copy, Shield, Users, X, Check } from 'lucide-react'
+import { KeyRound, Plus, Eye, EyeOff, Pencil, Trash2, Copy, Shield, Users, X, Check, Download } from 'lucide-react'
 import toast from 'react-hot-toast'
+import { exportToCSV } from '../utils/exportCSV'
 
 const PLATFORMS = [
   'LinkedIn', 'Indeed', 'Glassdoor', 'ZipRecruiter', 'Monster',
@@ -326,10 +327,31 @@ export default function SavedAccounts() {
             </p>
           </div>
         </div>
-        <button onClick={() => { setEditItem(null); setShowForm(true) }}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow shadow-blue-500/20">
-          <Plus size={16} /> Save New Account
-        </button>
+        <div className="flex gap-2">
+          {SA && (
+            <button
+              onClick={() => exportToCSV(accounts.map(a => {
+                const owner = allUsers.find(u => u.id === a.user_id)
+                return {
+                  id: a.id,
+                  member: owner?.name || a.user?.name || '',
+                  platform: a.custom_platform || a.platform,
+                  username: a.username || '',
+                  email: a.email || '',
+                  notes: a.notes || '',
+                  created_at: a.created_at || '',
+                }
+              }), 'saved-accounts')}
+              className="flex items-center gap-2 px-3 py-2 text-sm text-slate-400 border border-slate-700 rounded-xl hover:bg-slate-800"
+            >
+              <Download size={15} /> Export CSV
+            </button>
+          )}
+          <button onClick={() => { setEditItem(null); setShowForm(true) }}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2.5 rounded-xl text-sm font-semibold transition-colors shadow shadow-blue-500/20">
+            <Plus size={16} /> Save New Account
+          </button>
+        </div>
       </div>
 
       {/* Privacy notice for taskers */}

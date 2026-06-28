@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { useRealtime } from '../context/RealtimeContext'
 import { leaderboardService } from '../services/leaderboardService'
 import { formatDate } from '../utils/formatTime'
+import { exportToCSV } from '../utils/exportCSV'
 import { TZ_KENYA, todayInTz, tzLabel, fmtTimeInTz } from '../utils/timezone'
 import { SkeletonCard } from '../components/ui/Skeleton'
 import {
   Trophy, Clock, Briefcase, Zap, Target, TrendingUp, Medal,
-  Play, Pause, Square, Star, Users, Bot, Flame, Crown, Swords,
+  Play, Pause, Square, Star, Users, Bot, Flame, Crown, Swords, Download,
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 
@@ -410,11 +411,38 @@ export default function Leaderboard() {
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2">
-          <div className={`w-2 h-2 rounded-full ${activeToday > 0 ? 'bg-green-400 animate-pulse' : 'bg-slate-600'}`} />
-          <span><span className="text-slate-300 font-semibold">{activeToday}</span> of {stats.length} active today</span>
-          <span className="text-slate-600">·</span>
-          <span>Team: <span className="text-blue-400 font-semibold">{fmtSecs(teamTodaySecs)}</span> today</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => exportToCSV(
+              [...stats]
+                .sort((a, b) => b.hours - a.hours)
+                .map((s, i) => ({
+                  rank: i + 1,
+                  member: s.user.name,
+                  role: s.user.role?.replace(/_/g, ' ') || '',
+                  total_hours: s.hours,
+                  sessions: s.sessions,
+                  applications: s.applications,
+                  offers: s.offers,
+                  activity_entries: s.entries,
+                  ai_interviews: s.ai_interviews,
+                  ai_avg_score: s.aiAvgScore ?? '',
+                  today_hours: (s.todaySecs / 3600).toFixed(2),
+                  week_hours: (s.weekSecs / 3600).toFixed(2),
+                  last_active: s.lastActive || '',
+                })),
+              'leaderboard'
+            )}
+            className="flex items-center gap-2 px-3 py-2 text-xs text-slate-400 border border-slate-700 rounded-xl hover:bg-slate-800"
+          >
+            <Download size={14} /> Export CSV
+          </button>
+          <div className="flex items-center gap-2 text-xs text-slate-500 bg-slate-800 border border-slate-700 rounded-xl px-3 py-2">
+            <div className={`w-2 h-2 rounded-full ${activeToday > 0 ? 'bg-green-400 animate-pulse' : 'bg-slate-600'}`} />
+            <span><span className="text-slate-300 font-semibold">{activeToday}</span> of {stats.length} active today</span>
+            <span className="text-slate-600">·</span>
+            <span>Team: <span className="text-blue-400 font-semibold">{fmtSecs(teamTodaySecs)}</span> today</span>
+          </div>
         </div>
       </div>
 

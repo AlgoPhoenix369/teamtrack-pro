@@ -11,9 +11,10 @@ import EmptyState from '../components/ui/EmptyState'
 import { SkeletonCard } from '../components/ui/Skeleton'
 import { formatDateTime } from '../utils/formatTime'
 import toast from 'react-hot-toast'
+import { exportToCSV } from '../utils/exportCSV'
 import {
   HelpCircle, Send, CheckCircle, Clock,
-  MessageSquare, Plus, Trash2, ChevronDown, ChevronUp, X,
+  MessageSquare, Plus, Trash2, ChevronDown, ChevronUp, X, Download,
 } from 'lucide-react'
 
 const CATEGORIES = ['General', 'Personas', 'Account', 'Team', 'Applications', 'Technical', 'Other']
@@ -343,9 +344,30 @@ export default function HelpDesk() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setShowNew(true)}>
-          <Plus size={15} /> New Query
-        </Button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => exportToCSV(queries.map(q => ({
+              id: q.id,
+              subject: q.subject,
+              category: q.category,
+              priority: q.priority,
+              status: q.status,
+              submitted_by: q.from_user?.name || '',
+              assigned_to: q.to_user?.name || 'Any Admin',
+              message: q.message,
+              replies: (q.replies || []).length,
+              resolution_note: q.resolution_note || '',
+              submitted_at: q.created_at,
+              resolved_at: q.resolved_at || '',
+            })), 'helpdesk-queries')}
+            className="flex items-center gap-2 px-3 py-2 text-sm text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-slate-700 rounded-lg hover:bg-gray-50 dark:hover:bg-slate-800"
+          >
+            <Download size={15} /> Export CSV
+          </button>
+          <Button onClick={() => setShowNew(true)}>
+            <Plus size={15} /> New Query
+          </Button>
+        </div>
       </div>
 
       {/* Stats bar */}
