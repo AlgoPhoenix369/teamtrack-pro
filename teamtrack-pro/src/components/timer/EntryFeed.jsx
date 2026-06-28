@@ -1,5 +1,5 @@
 import { formatDateTime } from '../../utils/formatTime'
-import { Clock, Tag } from 'lucide-react'
+import { Clock, Tag, User } from 'lucide-react'
 
 const typeColors = {
   'Annotation Task': 'bg-blue-100 text-blue-700',
@@ -10,7 +10,7 @@ const typeColors = {
   'Other': 'bg-gray-100 text-gray-600',
 }
 
-export default function EntryFeed({ entries }) {
+export default function EntryFeed({ entries, user }) {
   if (!entries?.length) {
     return (
       <div className="text-center py-8 text-gray-400 text-sm">
@@ -32,7 +32,15 @@ export default function EntryFeed({ entries }) {
               </span>
             </div>
             {entry.notes && <p className="text-xs text-gray-500 mt-0.5">{entry.notes}</p>}
-            <p className="text-xs text-gray-400 mt-1">{formatDateTime(entry.timestamp)}</p>
+            <div className="flex items-center gap-2 mt-1 flex-wrap">
+              <p className="text-xs text-gray-400">{formatDateTime(entry.timestamp)}</p>
+              {user && (
+                <span className="inline-flex items-center gap-1 text-xs text-gray-400">
+                  <User size={10} className="text-gray-300" />
+                  {user.name}
+                </span>
+              )}
+            </div>
           </div>
         </div>
       ))}

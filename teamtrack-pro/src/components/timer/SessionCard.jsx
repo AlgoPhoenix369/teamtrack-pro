@@ -12,13 +12,32 @@ const typeColors = {
   'Other':           'bg-slate-700 text-slate-300',
 }
 
+const ROLE_COLORS = {
+  super_admin: 'bg-purple-600',
+  view_admin:  'bg-blue-600',
+  tasker:      'bg-slate-500',
+}
+
 export default function SessionCard({ session, tz }) {
   const [expanded, setExpanded] = useState(false)
-  const entries = session.activity_entries || []
-  const tzAbbr = tz ? tzLabel(tz) : null
+  const entries    = session.activity_entries || []
+  const tzAbbr     = tz ? tzLabel(tz) : null
+  const sessionUser = session.users  // populated when admin fetches all sessions
 
   return (
     <div className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden">
+
+      {/* User attribution strip — visible when admin views all sessions */}
+      {sessionUser && (
+        <div className="px-4 py-2 bg-slate-700/60 border-b border-slate-700 flex items-center gap-2">
+          <div className={`w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${ROLE_COLORS[sessionUser.role] || 'bg-slate-500'}`}>
+            {sessionUser.name[0]}
+          </div>
+          <span className="text-xs font-semibold text-slate-200">{sessionUser.name}</span>
+          <span className="text-xs text-slate-500 capitalize">· {sessionUser.role?.replace(/_/g, ' ')}</span>
+        </div>
+      )}
+
       <button
         onClick={() => setExpanded(p => !p)}
         className="w-full flex items-center gap-3 p-4 hover:bg-slate-700/50 transition-colors text-left"
@@ -40,7 +59,7 @@ export default function SessionCard({ session, tz }) {
               session.status === 'active'    ? 'bg-blue-900/40 text-blue-400'  :
                                                'bg-yellow-900/40 text-yellow-400'
             }`}>{session.status}</span>
-            <span className="text-xs text-slate-500">{entries.length} entries</span>
+            <span className="text-xs text-slate-500">{entries.length} {entries.length === 1 ? 'entry' : 'entries'}</span>
           </div>
           {session.description && (
             <p className="text-xs text-slate-400 mt-0.5 truncate">{session.description}</p>
@@ -60,12 +79,15 @@ export default function SessionCard({ session, tz }) {
           ) : (
             entries.map(entry => (
               <div key={entry.id} className="flex items-start gap-2 text-xs">
-                <span className={`px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${typeColors[entry.entry_type] || typeColors.Other}`}>
+                <span className={`px-2 py-0.5 rounded-full font-medium flex-shrink-0 mt-0.5 ${typeColors[entry.entry_type] || typeColors.Other}`}>
                   {entry.entry_type}
                 </span>
-                <div>
+                <div className="flex-1 min-w-0">
                   <span className="font-medium text-slate-300">{entry.title}</span>
                   {entry.notes && <span className="text-slate-500"> — {entry.notes}</span>}
+                  {sessionUser && (
+                    <span className="block text-slate-600 mt-0.5">logged by {sessionUser.name}</span>
+                  )}
                 </div>
               </div>
             ))

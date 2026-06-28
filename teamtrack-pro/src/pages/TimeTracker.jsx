@@ -183,7 +183,7 @@ export default function TimeTracker() {
           </div>
 
           <ActivityEntryForm />
-          <EntryFeed entries={entries} />
+          <EntryFeed entries={entries} user={user} />
         </div>
       ) : (
         <div className="bg-white dark:bg-slate-900 rounded-2xl border-2 border-dashed border-gray-200 dark:border-slate-700 p-10 text-center">
