@@ -20,7 +20,7 @@ export function isTasker(user) {
   return user?.role === ROLES.TASKER
 }
 
-// Super admins (Vincent, Judy) also track time and appear in worker lists
+// Super admins (Vincent, Fin) also track time and appear in worker lists
 export function canTrackTime(user) {
   return isTasker(user) || isSuperAdmin(user)
 }

@@ -173,7 +173,7 @@ export default function Login() {
               </Button>
 
               <div className="text-xs text-center text-gray-400 space-y-1">
-                <p>vincent@teamtrack.pro · judy@teamtrack.pro · ruth@teamtrack.pro</p>
+                <p>vincent@teamtrack.pro · ruth@teamtrack.pro · fin@teamtrack.pro</p>
                 <p className="text-gray-300 font-medium">Password: <span className="font-bold text-blue-400">55555</span></p>
               </div>
             </form>

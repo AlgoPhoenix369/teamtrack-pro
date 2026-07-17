@@ -2,21 +2,37 @@
 
 export const TEAMS = [
   { id: 'team-1', name: 'Team 1', led_by: 'user-vincent', created_at: '2024-01-01T00:00:00Z' },
-  { id: 'team-2', name: 'Team 2', led_by: 'user-ruth', created_at: '2024-01-01T00:00:00Z' },
+  { id: 'team-2', name: 'Team 2', led_by: 'user-ruth',    created_at: '2024-01-01T00:00:00Z' },
+  { id: 'team-3', name: 'Team 3', led_by: 'user-fin',     created_at: '2024-01-01T00:00:00Z' },
 ]
 
 export const USERS = [
-  { id: 'user-vincent', name: 'Vincent',  email: 'vincent@teamtrack.pro', role: 'super_admin', team_id: 'team-1', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-judy',    name: 'Judy',     email: 'judy@teamtrack.pro',    role: 'super_admin', team_id: 'team-1', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-ruth',    name: 'Ruth',     email: 'ruth@teamtrack.pro',    role: 'view_admin',  team_id: 'team-2', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 2' } },
-  { id: 'user-sharon',  name: 'Sharon',   email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-rose',    name: 'Rose',     email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-davis',   name: 'Davis',    email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-newton',  name: 'Newton',   email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-evans',     name: 'Evans',     email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
-  { id: 'user-cliff',     name: 'Cliff',     email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
-  { id: 'user-brandon',   name: 'Brandon',   email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
-  { id: 'user-catherine', name: 'Catherine', email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  // ── Admins (fixed leads) ──
+  { id: 'user-vincent', name: 'Vincent',             email: 'vincent@teamtrack.pro', role: 'super_admin', team_id: 'team-1', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-ruth',    name: 'Ruth',                email: 'ruth@teamtrack.pro',    role: 'view_admin',  team_id: 'team-2', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-fin',     name: 'Fin',                 email: 'fin@teamtrack.pro',     role: 'super_admin', team_id: 'team-3', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 3' } },
+  // ── Team 1 (led by Vincent) ──
+  { id: 'user-sharon',  name: 'Sharon',              email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-rose',    name: 'Rose',                email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-davis',   name: 'Davis',               email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-newton',  name: 'Newton',              email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-victor',  name: 'Victor Kiprop',       email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-tonny',   name: 'Tonny Bett',          email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-grace',   name: 'Grace Ngari',         email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-nevil',   name: 'Nevil Maloba',        email: null, role: 'tasker', team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
+  // ── Team 2 (led by Ruth) ──
+  { id: 'user-evans',     name: 'Evans',             email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-cliff',     name: 'Cliff',             email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-brandon',   name: 'Brandon',           email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-catherine', name: 'Catherine',         email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-arch',   name: 'Arch Mugi',            email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-peris',  name: 'Peris Wanjiku Thuo',   email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-mark',   name: 'Mark Kinoti Kinyua',   email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-john',   name: "John Muriithi Ndung'u", email: null, role: 'tasker', team_id: 'team-2', pin_hash: '1234', is_active: true, teams: { name: 'Team 2' } },
+  // ── Team 3 (led by Fin) ──
+  { id: 'user-stephen', name: 'Stephen Wanjohi Kariithi', email: null, role: 'tasker', team_id: 'team-3', pin_hash: '1234', is_active: true, teams: { name: 'Team 3' } },
+  { id: 'user-oscar',   name: 'Oscar Romero',             email: null, role: 'tasker', team_id: 'team-3', pin_hash: '1234', is_active: true, teams: { name: 'Team 3' } },
+  { id: 'user-habiba',  name: 'Habiba Daudi Abdi',        email: null, role: 'tasker', team_id: 'team-3', pin_hash: '1234', is_active: true, teams: { name: 'Team 3' } },
 ]
 
 const today = new Date().toISOString().split('T')[0]
@@ -72,7 +88,7 @@ export const PERSONAS = [
     phone: '+1 555 020 5678', linkedin_url: null,
     location: 'Toronto, Canada', headline: 'Frontend Engineer — React & TypeScript',
     resume_url: null, notes: null,
-    assigned_to: 'user-davis', is_active: true, created_by: 'user-judy',
+    assigned_to: 'user-davis', is_active: true, created_by: 'user-fin',
     created_at: '2024-03-10T00:00:00Z', updated_at: '2024-03-10T00:00:00Z',
     users: { name: 'Davis' },
   },
@@ -190,7 +206,7 @@ export const APPLICATION_TIMELINE = [
 
 export const AUDIT_LOG = [
   { id: 'al-1', user_id: 'user-vincent', action: 'create', table_name: 'personas', record_id: 'persona-1', old_data: null, new_data: { full_name: 'Sarah Johnson' }, created_at: '2024-03-01T00:00:00Z', users: { name: 'Vincent' } },
-  { id: 'al-2', user_id: 'user-judy',    action: 'create', table_name: 'personas', record_id: 'persona-3', old_data: null, new_data: { full_name: 'Amara Diallo' },   created_at: '2024-03-10T00:00:00Z', users: { name: 'Judy' } },
+  { id: 'al-2', user_id: 'user-fin',     action: 'create', table_name: 'personas', record_id: 'persona-3', old_data: null, new_data: { full_name: 'Amara Diallo' },   created_at: '2024-03-10T00:00:00Z', users: { name: 'Fin' } },
 ]
 
 // ── HELP QUERIES ─────────────────────────────────────────────────────────────
@@ -222,23 +238,23 @@ export const HELP_QUERIES = [
     status: 'resolved',
     priority: 'low',
     category: 'Account',
-    resolved_by: 'user-judy',
+    resolved_by: 'user-fin',
     resolved_at: yesterday + 'T15:00:00Z',
     resolution_note: 'Go to Settings → Change PIN. Enter your new PIN twice and click Update PIN. Issue was browser cache — cleared and confirmed working.',
     created_at: yesterday + 'T09:00:00Z',
     updated_at: yesterday + 'T15:00:00Z',
-    from_user: { name: 'Ruth', role: 'tasker' },
+    from_user: { name: 'Ruth', role: 'view_admin' },
     to_user: null,
     replies: [
-      { id: 'r-1', from_user_id: 'user-judy', text: 'Hi Ruth, try clearing your browser cache first and retry. Let me know!', created_at: yesterday + 'T10:00:00Z', from_user: { name: 'Judy' } },
+      { id: 'r-1', from_user_id: 'user-fin', text: 'Hi Ruth, try clearing your browser cache first and retry. Let me know!', created_at: yesterday + 'T10:00:00Z', from_user: { name: 'Fin' } },
     ],
   },
   {
     id: 'hq-3',
     from_user_id: 'user-vincent',
-    to_user_id: 'user-judy',
-    subject: 'Team 2 capacity review',
-    message: 'Judy, should we add another tasker to Team 2? Evans is handling everything solo. Let me know your thoughts.',
+    to_user_id: 'user-fin',
+    subject: 'Team 3 capacity review',
+    message: 'Fin, how is Team 3 settling in? Let me know if you need additional resources or capacity support.',
     status: 'pending',
     priority: 'high',
     category: 'Team',
@@ -248,7 +264,7 @@ export const HELP_QUERIES = [
     created_at: today + 'T07:00:00Z',
     updated_at: today + 'T07:00:00Z',
     from_user: { name: 'Vincent', role: 'super_admin' },
-    to_user: { name: 'Judy', role: 'super_admin' },
+    to_user: { name: 'Fin', role: 'super_admin' },
     replies: [],
   },
 ]
@@ -276,7 +292,7 @@ export const ANNOUNCEMENTS = [
   },
   {
     id: 'ann-2',
-    author_id: 'user-judy',
+    author_id: 'user-fin',
     title: 'Weekly target reminder',
     body: 'A reminder that our weekly application target is 30 per team member. Please ensure your sessions are logged daily so we can track progress accurately. The leaderboard is updated in real time.',
     priority: 'normal',
@@ -299,37 +315,36 @@ export const ANNOUNCEMENTS = [
 // ── NOTIFICATIONS ────────────────────────────────────────────────────────────
 export const NOTIFICATIONS = [
   { id: 'notif-1', user_id: 'user-vincent', type: 'message',   title: 'New message from Davis',   body: 'Vincent, I have a question about my persona — can we chat?', read: false, link: '/messages', created_at: new Date(Date.now() - 3600000).toISOString() },
-  { id: 'notif-2', user_id: 'user-judy',    type: 'message',   title: 'New message from Harveel', body: 'Evans completed her first 50 applications.', read: false, link: '/messages', created_at: new Date(Date.now() - 1800000).toISOString() },
+  { id: 'notif-2', user_id: 'user-fin',     type: 'message',   title: 'New message from Evans',   body: 'Evans completed her first 50 applications.', read: false, link: '/messages', created_at: new Date(Date.now() - 1800000).toISOString() },
   { id: 'notif-3', user_id: 'user-vincent', type: 'help',      title: 'New help query from Sharon', body: 'Persona assignment issue — cannot see assigned persona.', read: false, link: '/help-desk', created_at: new Date(Date.now() - 7200000).toISOString() },
-  { id: 'notif-4', user_id: 'user-judy',    type: 'help',      title: 'New help query from Ruth',   body: 'How do I update my PIN?', read: true,  link: '/help-desk', created_at: new Date(Date.now() - 86400000).toISOString() },
+  { id: 'notif-4', user_id: 'user-fin',     type: 'help',      title: 'New help query from Ruth',   body: 'How do I update my PIN?', read: true,  link: '/help-desk', created_at: new Date(Date.now() - 86400000).toISOString() },
   { id: 'notif-5', user_id: 'user-sharon',  type: 'meeting',   title: 'Meeting tomorrow: Team 1 Weekly Standup', body: 'Starts at 09:00 — Google Meet link ready.', read: false, link: '/meetings', created_at: new Date(Date.now() - 600000).toISOString() },
   { id: 'notif-6', user_id: 'user-ruth',    type: 'meeting',   title: 'Meeting tomorrow: Team 1 Weekly Standup', body: 'Starts at 09:00 — Google Meet link ready.', read: false, link: '/meetings', created_at: new Date(Date.now() - 600000).toISOString() },
-  { id: 'notif-7', user_id: 'user-vincent', type: 'meeting',   title: 'Meeting in 1 hour: Judy & Vincent — Admin Sync', body: 'Admin strategy discussion starts soon.', read: false, link: '/meetings', created_at: new Date(Date.now() - 300000).toISOString() },
+  { id: 'notif-7', user_id: 'user-vincent', type: 'meeting',   title: 'Meeting in 1 hour: Fin & Vincent — Admin Sync', body: 'Admin strategy discussion starts soon.', read: false, link: '/meetings', created_at: new Date(Date.now() - 300000).toISOString() },
   { id: 'notif-8', user_id: 'user-sharon',  type: 'message',   title: 'Message from Vincent',       body: 'Great work. Let me know if you hit any blockers.', read: true, link: '/messages', created_at: new Date(Date.now() - 172800000).toISOString() },
 ]
 
 // ── DIRECT MESSAGES ──────────────────────────────────────────────────────────
-// Rule: super_admin ↔ anyone. All other roles: only ↔ super_admin.
 const daysAgo = n => new Date(Date.now() - n * 86400000).toISOString()
 const hoursAgo = n => new Date(Date.now() - n * 3600000).toISOString()
 const minsAgo  = n => new Date(Date.now() - n * 60000).toISOString()
 
 export const MESSAGES = [
   // Vincent ↔ Sharon
-  { id: 'dm-1',  from_user_id: 'user-vincent', to_user_id: 'user-sharon', text: 'Hi Sharon, how is the annotation batch coming along?', read_by_recipient: true,  created_at: daysAgo(2) },
+  { id: 'dm-1',  from_user_id: 'user-vincent', to_user_id: 'user-sharon',  text: 'Hi Sharon, how is the annotation batch coming along?', read_by_recipient: true,  created_at: daysAgo(2) },
   { id: 'dm-2',  from_user_id: 'user-sharon',  to_user_id: 'user-vincent', text: 'Going well! Batch #12 is done, starting on #13 today.', read_by_recipient: true,  created_at: daysAgo(2) },
-  { id: 'dm-3',  from_user_id: 'user-vincent', to_user_id: 'user-sharon', text: 'Great work. Let me know if you hit any blockers.', read_by_recipient: true,  created_at: daysAgo(2) },
-  // Judy ↔ Ruth
-  { id: 'dm-4',  from_user_id: 'user-judy',    to_user_id: 'user-ruth',   text: 'Ruth, can you check the applications flagged for review?', read_by_recipient: true,  created_at: daysAgo(1) },
-  { id: 'dm-5',  from_user_id: 'user-ruth',    to_user_id: 'user-judy',   text: 'On it! Will have it sorted by end of day.', read_by_recipient: true,  created_at: daysAgo(1) },
-  // Vincent ↔ Judy
-  { id: 'dm-6',  from_user_id: 'user-vincent', to_user_id: 'user-judy',   text: 'Judy, have you reviewed the Team 2 metrics this week?', read_by_recipient: true,  created_at: hoursAgo(5) },
-  { id: 'dm-7',  from_user_id: 'user-judy',    to_user_id: 'user-vincent', text: 'Yes — numbers look good overall. Harveel\'s team is ahead of target.', read_by_recipient: true,  created_at: hoursAgo(4) },
-  { id: 'dm-8',  from_user_id: 'user-vincent', to_user_id: 'user-judy',   text: 'Perfect. Let\'s discuss in the admin sync later.', read_by_recipient: false, created_at: hoursAgo(3) },
+  { id: 'dm-3',  from_user_id: 'user-vincent', to_user_id: 'user-sharon',  text: 'Great work. Let me know if you hit any blockers.', read_by_recipient: true,  created_at: daysAgo(2) },
+  // Fin ↔ Ruth
+  { id: 'dm-4',  from_user_id: 'user-fin',     to_user_id: 'user-ruth',    text: 'Ruth, can you check the applications flagged for review?', read_by_recipient: true,  created_at: daysAgo(1) },
+  { id: 'dm-5',  from_user_id: 'user-ruth',    to_user_id: 'user-fin',     text: 'On it! Will have it sorted by end of day.', read_by_recipient: true,  created_at: daysAgo(1) },
+  // Vincent ↔ Fin
+  { id: 'dm-6',  from_user_id: 'user-vincent', to_user_id: 'user-fin',     text: 'Fin, how is Team 3 shaping up? Any blockers?', read_by_recipient: true,  created_at: hoursAgo(5) },
+  { id: 'dm-7',  from_user_id: 'user-fin',     to_user_id: 'user-vincent', text: 'Going well — team is onboarded and sessions are being logged.', read_by_recipient: true,  created_at: hoursAgo(4) },
+  { id: 'dm-8',  from_user_id: 'user-vincent', to_user_id: 'user-fin',     text: 'Perfect. Let\'s discuss in the admin sync later.', read_by_recipient: false, created_at: hoursAgo(3) },
   // Davis → Vincent (unread by Vincent)
   { id: 'dm-9',  from_user_id: 'user-davis',   to_user_id: 'user-vincent', text: 'Vincent, I have a question about my persona — can we chat?', read_by_recipient: false, created_at: hoursAgo(1) },
-  // Harveel → Judy
-  { id: 'dm-10', from_user_id: 'user-harveel', to_user_id: 'user-judy',   text: 'Hi Judy, just a heads up — Evans completed her first 50 applications.', read_by_recipient: false, created_at: minsAgo(30) },
+  // Evans → Fin
+  { id: 'dm-10', from_user_id: 'user-evans',   to_user_id: 'user-fin',     text: 'Hi Fin, just a heads up — completed first 50 applications today!', read_by_recipient: false, created_at: minsAgo(30) },
 ]
 
 export const MEETINGS = [
@@ -363,17 +378,17 @@ export const MEETINGS = [
   },
   {
     id: 'meet-3',
-    title: 'Judy & Vincent — Admin Sync',
+    title: 'Fin & Vincent — Admin Sync',
     description: 'Admin strategy discussion: team capacity, persona allocations, new tasks.',
-    organizer_id: 'user-judy',
+    organizer_id: 'user-fin',
     meet_link: 'https://meet.google.com/adm-sync-001',
     start_time: todayAt(nowH.getHours() + 1, 0),
     end_time: todayAt(nowH.getHours() + 2, 0),
-    attendees: ['user-judy', 'user-vincent'],
+    attendees: ['user-fin', 'user-vincent', 'user-ruth'],
     status: 'scheduled',
     color: '#059669',
     created_at: today + 'T05:00:00Z',
-    organizer: { name: 'Judy' },
+    organizer: { name: 'Fin' },
   },
 ]
 

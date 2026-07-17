@@ -48,7 +48,7 @@ function NewQueryModal({ isOpen, onClose, onSubmit, admins }) {
           <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Send To</label>
           <select value={form.to_user_id} onChange={e => set('to_user_id', e.target.value)}
             className="w-full border border-gray-200 dark:border-slate-600 rounded-lg px-3 py-2 text-sm dark:bg-slate-800 dark:text-gray-200">
-            <option value="">Anyone (Vincent, Judy or Ruth)</option>
+            <option value="">Anyone (Vincent, Ruth or Fin)</option>
             {admins.map(a => <option key={a.id} value={a.id}>{a.name}</option>)}
           </select>
         </div>
@@ -340,7 +340,7 @@ export default function HelpDesk() {
           <div>
             <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Help Desk</h1>
             <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-              {isAdmin ? 'Manage team queries and support requests' : 'Ask Vincent, Judy or Ruth for help'}
+              {isAdmin ? 'Manage team queries and support requests' : 'Ask Vincent, Ruth or Fin for help'}
             </p>
           </div>
         </div>
