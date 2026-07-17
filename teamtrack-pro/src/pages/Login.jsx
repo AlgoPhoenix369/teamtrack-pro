@@ -130,6 +130,10 @@ export default function Login() {
               <Button type="submit" className="w-full" size="lg" loading={loading}>
                 Sign In
               </Button>
+
+              <p className="text-xs text-center text-gray-400">
+                PIN for all team members: <span className="font-bold text-blue-500">1234</span>
+              </p>
             </form>
           ) : (
             <form onSubmit={handleAdminLogin} className="space-y-4">
@@ -168,9 +172,10 @@ export default function Login() {
                 Sign In as Admin
               </Button>
 
-              <p className="text-xs text-center text-gray-400">
-                Admin accounts: vincent@teamtrack.pro · judy@teamtrack.pro · ruth@teamtrack.pro
-              </p>
+              <div className="text-xs text-center text-gray-400 space-y-1">
+                <p>vincent@teamtrack.pro · judy@teamtrack.pro · ruth@teamtrack.pro</p>
+                <p className="text-gray-300 font-medium">Password: <span className="font-bold text-blue-400">55555</span></p>
+              </div>
             </form>
           )}
         </div>

@@ -10,6 +10,7 @@ export const authService = {
       if (!user) throw new Error('User not found')
       if (!['super_admin', 'view_admin'].includes(user.role)) throw new Error('Not an admin account')
       if (!password) throw new Error('Password required')
+      if (user.password && user.password !== password) throw new Error('Invalid password')
       return { user }
     }
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })

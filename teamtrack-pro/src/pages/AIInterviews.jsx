@@ -65,8 +65,7 @@ function InterviewForm({ onClose, onSave, initial, applications, currentUser }) 
 
   const handleSubmit = async e => {
     e.preventDefault()
-    if (!form.application_id) return toast.error('Select an application')
-    if (!form.scheduled_at)   return toast.error('Scheduled time is required')
+    if (!form.scheduled_at) return toast.error('Scheduled time is required')
     setSaving(true)
     try {
       const payload = {
@@ -100,10 +99,10 @@ function InterviewForm({ onClose, onSave, initial, applications, currentUser }) 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
           {/* Application */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Application *</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-slate-300 mb-1">Application (optional)</label>
             <select className="w-full border border-gray-200 dark:border-slate-600 rounded-xl px-3 py-2 text-sm bg-white dark:bg-slate-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={form.application_id} onChange={e => set('application_id', e.target.value)}>
-              <option value="">Select application…</option>
+              <option value="">{myApps.length === 0 ? 'No applications yet — add them in Applications' : 'None / General practice'}</option>
               {myApps.map(a => (
                 <option key={a.id} value={a.id}>{a.company_name} — {a.job_title}</option>
               ))}
@@ -362,16 +361,18 @@ export default function AIInterviews() {
   const load = useCallback(async () => {
     setLoading(true)
     try {
+      const fetchApps = USE_MOCK
+        ? db.getApplications(isAdmin(user) ? {} : { owner_id: user.id })
+        : isAdmin(user)
+          ? applicationService.getAllApplications().catch(() => [])
+          : applicationService.getApplicationsByUser(user.id).catch(() => [])
+
       const [data, apps, users] = await Promise.all([
         // getTeamAll() uses a SECURITY DEFINER RPC so every role sees all interviews
         filterUserId
           ? aiInterviewService.getAll({ user_id: filterUserId })
           : aiInterviewService.getTeamAll(),
-        USE_MOCK
-          ? db.getApplications(isAdmin(user) ? {} : { owner_id: user.id })
-          : isAdmin(user)
-            ? applicationService.getAllApplications()
-            : applicationService.getApplicationsByUser(user.id),
+        fetchApps,
         USE_MOCK
           ? db.getUsers()
           : adminService.getAllUsers().catch(() => []),

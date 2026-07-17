@@ -6,9 +6,9 @@ export const TEAMS = [
 ]
 
 export const USERS = [
-  { id: 'user-vincent', name: 'Vincent',  email: 'vincent@teamtrack.pro', role: 'super_admin', team_id: 'team-1', pin_hash: null,   is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-judy',    name: 'Judy',     email: 'judy@teamtrack.pro',    role: 'super_admin', team_id: 'team-1', pin_hash: null,   is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-ruth',    name: 'Ruth',     email: 'ruth@teamtrack.pro',    role: 'view_admin',  team_id: 'team-2', pin_hash: null,   is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-vincent', name: 'Vincent',  email: 'vincent@teamtrack.pro', role: 'super_admin', team_id: 'team-1', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-judy',    name: 'Judy',     email: 'judy@teamtrack.pro',    role: 'super_admin', team_id: 'team-1', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 1' } },
+  { id: 'user-ruth',    name: 'Ruth',     email: 'ruth@teamtrack.pro',    role: 'view_admin',  team_id: 'team-2', pin_hash: null,   password: '55555', is_active: true, teams: { name: 'Team 2' } },
   { id: 'user-sharon',  name: 'Sharon',   email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
   { id: 'user-rose',    name: 'Rose',     email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
   { id: 'user-davis',   name: 'Davis',    email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
