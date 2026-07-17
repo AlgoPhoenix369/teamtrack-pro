@@ -22,6 +22,16 @@ export const adminService = {
     return data
   },
 
+  async deleteUser(id, adminId) {
+    if (USE_MOCK) {
+      db.deleteUser(id)
+      db.addAuditLog({ user_id: adminId, action: 'delete', table_name: 'users', record_id: id, new_data: null })
+      return
+    }
+    const { error } = await supabase.from('users').delete().eq('id', id)
+    if (error) throw error
+  },
+
   async updateUser(id, updates, adminId) {
     if (USE_MOCK) {
       const u = db.updateUser(id, updates)

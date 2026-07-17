@@ -60,6 +60,17 @@ export const db = {
     return user
   },
 
+  deleteUser(id) {
+    save('users', this.getUsers().filter(u => u.id !== id))
+    // Cascade-remove owned data (mirrors ON DELETE CASCADE in schema)
+    save('sessions',      load('sessions', []).filter(x => x.user_id !== id))
+    save('applications',  load('applications', []).filter(x => x.owner_id !== id))
+    save('ai_interviews', load('ai_interviews', []).filter(x => x.user_id !== id))
+    save('skills',        load('skills', []).filter(x => x.user_id !== id))
+    save('saved_accounts',load('saved_accounts', []).filter(x => x.user_id !== id))
+    save('milestones',    load('milestones', []).filter(x => x.assigned_to !== id && x.created_by !== id))
+  },
+
   // ── TEAMS ───────────────────────────────────────────
   getTeams() {
     const teams = load('teams', TEAMS)

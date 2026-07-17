@@ -15,7 +15,7 @@ import { formatDateTime } from '../utils/formatTime'
 import toast from 'react-hot-toast'
 import {
   Users, Shield, UserPlus, RefreshCw, ToggleLeft, ToggleRight,
-  Download, Eye, Database, ArrowUp, ArrowDown, Activity, StopCircle,
+  Download, Eye, Database, ArrowUp, ArrowDown, Activity, StopCircle, Trash2,
 } from 'lucide-react'
 
 const ROLES = ['tasker', 'view_admin', 'super_admin']
@@ -131,7 +131,7 @@ function RoleModal({ target, currentUser, onClose, onChangeRole }) {
   )
 }
 
-function UserRow({ u, onResetPin, onToggle, onChangeRole, canEdit, isOnline }) {
+function UserRow({ u, onResetPin, onToggle, onChangeRole, onDelete, canEdit, isOnline, isSelf }) {
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-slate-700/40 transition-colors">
       <td className="px-4 py-3">
@@ -174,6 +174,12 @@ function UserRow({ u, onResetPin, onToggle, onChangeRole, canEdit, isOnline }) {
               className="p-1.5 text-gray-400 hover:text-orange-600 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors">
               {u.is_active ? <ToggleRight size={13} /> : <ToggleLeft size={13} />}
             </button>
+            {!isSelf && (
+              <button onClick={() => onDelete(u)} title="Delete member permanently"
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded transition-colors">
+                <Trash2 size={13} />
+              </button>
+            )}
           </div>
         )}
       </td>
@@ -225,6 +231,7 @@ export default function Admin() {
   const [pinTarget, setPinTarget] = useState(null)
   const [toggleTarget, setToggleTarget] = useState(null)
   const [roleTarget, setRoleTarget] = useState(null)
+  const [deleteTarget, setDeleteTarget] = useState(null)
   const [showAddUser, setShowAddUser] = useState(false)
   const [newUser, setNewUser] = useState({ name: '', email: '', role: 'tasker', team_id: '', pin_hash: '1234' })
 
@@ -266,6 +273,16 @@ export default function Admin() {
     setUsers(prev => prev.map(x => x.id === u.id ? { ...x, is_active: !u.is_active } : x))
     toast.success(`${u.name} ${u.is_active ? 'deactivated' : 'activated'}`)
     setToggleTarget(null)
+  }
+
+  const handleDeleteUser = async () => {
+    const u = deleteTarget
+    try {
+      await adminService.deleteUser(u.id, user.id)
+      setUsers(prev => prev.filter(x => x.id !== u.id))
+      toast.success(`${u.name} permanently removed`)
+    } catch { toast.error('Failed to delete member') }
+    setDeleteTarget(null)
   }
 
   const handleAddUser = async (e) => {
@@ -353,7 +370,8 @@ export default function Admin() {
                   {users.map(u => (
                     <UserRow key={u.id} u={u}
                       onResetPin={setPinTarget} onToggle={setToggleTarget}
-                      onChangeRole={setRoleTarget} canEdit={canEdit} isOnline={isOnline} />
+                      onChangeRole={setRoleTarget} onDelete={setDeleteTarget}
+                      canEdit={canEdit} isOnline={isOnline} isSelf={u.id === user?.id} />
                   ))}
                 </tbody>
               </table>
@@ -539,6 +557,13 @@ export default function Admin() {
         message={`${toggleTarget?.is_active ? 'Deactivate' : 'Activate'} ${toggleTarget?.name}?`}
         danger={toggleTarget?.is_active}
         confirmLabel={toggleTarget?.is_active ? 'Deactivate' : 'Activate'}
+      />
+
+      <ConfirmModal isOpen={!!deleteTarget} onClose={() => setDeleteTarget(null)} onConfirm={handleDeleteUser}
+        title="Permanently Remove Member"
+        message={`Remove ${deleteTarget?.name} completely? This deletes all their sessions, applications, skills, and activity data and cannot be undone.`}
+        danger
+        confirmLabel="Delete Permanently"
       />
     </div>
   )
