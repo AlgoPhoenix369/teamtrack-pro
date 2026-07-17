@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRealtime } from '../context/RealtimeContext'
 import { leaderboardService } from '../services/leaderboardService'
 import { formatDate } from '../utils/formatTime'
@@ -301,11 +301,13 @@ export default function Leaderboard() {
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState([])
   const [recentActivity, setRecentActivity] = useState([])
+  const initialLoadDone = useRef(false)
 
   useEffect(() => { loadData() }, [tick])
 
   const loadData = async () => {
-    setLoading(true)
+    const isInitial = !initialLoadDone.current
+    if (isInitial) setLoading(true)
     try {
       const { users, sessions, appCountsMap, aiInterviews } = await leaderboardService.getData()
 
@@ -354,6 +356,7 @@ export default function Leaderboard() {
         }
       })
 
+      initialLoadDone.current = true
       setStats(computed)
 
       const allEntries = sessions
@@ -368,7 +371,7 @@ export default function Leaderboard() {
 
       setRecentActivity(allEntries)
     } catch (e) { console.error(e) }
-    finally { setLoading(false) }
+    finally { if (isInitial) setLoading(false) }
   }
 
   const tab    = TABS.find(t => t.id === activeTab)
