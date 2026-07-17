@@ -2,15 +2,14 @@
 
 export const TEAMS = [
   { id: 'team-1', name: 'Team 1', led_by: 'user-vincent', created_at: '2024-01-01T00:00:00Z' },
-  { id: 'team-2', name: 'Team 2', led_by: 'user-harveel', created_at: '2024-01-01T00:00:00Z' },
+  { id: 'team-2', name: 'Team 2', led_by: 'user-ruth', created_at: '2024-01-01T00:00:00Z' },
 ]
 
 export const USERS = [
   { id: 'user-vincent', name: 'Vincent',  email: 'vincent@teamtrack.pro', role: 'super_admin', team_id: 'team-1', pin_hash: null,   is_active: true, teams: { name: 'Team 1' } },
   { id: 'user-judy',    name: 'Judy',     email: 'judy@teamtrack.pro',    role: 'super_admin', team_id: 'team-1', pin_hash: null,   is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-harveel', name: 'Harveel',  email: 'harveel@teamtrack.pro', role: 'view_admin',  team_id: 'team-2', pin_hash: null,   is_active: true, teams: { name: 'Team 2' } },
+  { id: 'user-ruth',    name: 'Ruth',     email: 'ruth@teamtrack.pro',    role: 'view_admin',  team_id: 'team-2', pin_hash: null,   is_active: true, teams: { name: 'Team 2' } },
   { id: 'user-sharon',  name: 'Sharon',   email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
-  { id: 'user-ruth',    name: 'Ruth',     email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
   { id: 'user-rose',    name: 'Rose',     email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
   { id: 'user-davis',   name: 'Davis',    email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
   { id: 'user-newton',  name: 'Newton',   email: null,                    role: 'tasker',      team_id: 'team-1', pin_hash: '1234', is_active: true, teams: { name: 'Team 1' } },
@@ -42,7 +41,7 @@ export const SESSIONS = [
     end_time: new Date(Date.now() - 165600000).toISOString(), total_seconds: 7200,
     description: 'Software tasking — reviewed PRs and completed tasking queue', status: 'completed',
     created_at: new Date(Date.now() - 172800000).toISOString(),
-    users: { name: 'Ruth', role: 'tasker', team_id: 'team-1' },
+    users: { name: 'Ruth', role: 'view_admin', team_id: 'team-2' },
     activity_entries: [
       { id: 'ae-3', session_id: 'session-2', user_id: 'user-ruth', title: 'Reviewed PR queue', notes: '5 PRs reviewed', entry_type: 'Software Task', timestamp: new Date(Date.now() - 170000000).toISOString() },
     ],

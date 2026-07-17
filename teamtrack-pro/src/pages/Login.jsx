@@ -169,7 +169,7 @@ export default function Login() {
               </Button>
 
               <p className="text-xs text-center text-gray-400">
-                Admin accounts: vincent@teamtrack.pro · judy@teamtrack.pro · harveel@teamtrack.pro
+                Admin accounts: vincent@teamtrack.pro · judy@teamtrack.pro · ruth@teamtrack.pro
               </p>
             </form>
           )}
